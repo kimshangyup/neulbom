@@ -1,0 +1,861 @@
+{% extends 'dashboard_base.html' %}
+{% load static %}
+
+{% block title %}강사 대시보드 - 늘봄학교{% endblock %}
+
+{% block sidebar %}
+<!-- Instructor Sidebar Menu -->
+<nav class="space-y-2">
+    <div class="mb-6">
+        <h3 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">학생 관리</h3>
+        <a href="#my-classes" onclick="showSection('my-classes'); return false;"
+           class="sidebar-link flex items-center px-3 py-2 text-sm font-medium rounded-lg text-indigo-600 bg-indigo-50">
+            <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path>
+            </svg>
+            내 학급
+        </a>
+    </div>
+
+    <div class="mb-6">
+        <h3 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">빠른 추가</h3>
+        <button onclick="openSchoolModal()"
+                class="w-full flex items-center px-3 py-2 text-sm font-medium rounded-lg text-gray-700 hover:bg-gray-100 mb-2">
+            <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
+            </svg>
+            학교 추가
+        </button>
+        <button onclick="openClassModal()"
+                class="w-full flex items-center px-3 py-2 text-sm font-medium rounded-lg text-gray-700 hover:bg-gray-100">
+            <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+            </svg>
+            학급 추가
+        </button>
+    </div>
+
+    <div class="mb-6">
+        <h3 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">데이터</h3>
+        <a href="{% url 'dashboard:export_students' %}"
+           class="sidebar-link flex items-center px-3 py-2 text-sm font-medium rounded-lg text-gray-700 hover:bg-gray-100">
+            <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+            </svg>
+            데이터 내보내기
+        </a>
+    </div>
+
+    <div class="border-t pt-4">
+        <a href="{% url 'students:upload-csv' %}"
+           class="w-full flex items-center justify-center px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 transition">
+            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+            </svg>
+            CSV 일괄 업로드
+        </a>
+        <a href="{% url 'students:download-template' %}"
+           class="w-full mt-2 flex items-center justify-center px-4 py-2 text-sm font-medium text-gray-700 bg-gray-200 rounded-lg hover:bg-gray-300 transition">
+            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+            </svg>
+            템플릿 다운로드
+        </a>
+    </div>
+</nav>
+{% endblock %}
+
+{% block content %}
+<!-- My Classes Section -->
+<div id="my-classes-section">
+    <div class="mb-6 flex justify-between items-center">
+        <div>
+            <h1 class="text-2xl font-bold text-gray-900">내 학급</h1>
+            <p class="text-gray-600 mt-1">학교별 학급 및 학생 관리</p>
+        </div>
+        <div class="flex space-x-2">
+            <input type="text" id="search-student" placeholder="학생 검색..."
+                   class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                   onkeyup="filterStudents()">
+        </div>
+    </div>
+
+    <!-- Summary Stats -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        <div class="bg-white rounded-lg shadow p-4">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-gray-500 text-xs font-medium">총 학급 수</p>
+                    <p class="text-2xl font-bold text-gray-900 mt-1">{{ total_classes }}</p>
+                </div>
+                <div class="bg-indigo-100 rounded-full p-2">
+                    <svg class="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
+                    </svg>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-lg shadow p-4">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-gray-500 text-xs font-medium">총 학생 수</p>
+                    <p class="text-2xl font-bold text-gray-900 mt-1">{{ total_students }}</p>
+                </div>
+                <div class="bg-green-100 rounded-full p-2">
+                    <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path>
+                    </svg>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-lg shadow p-4">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-gray-500 text-xs font-medium">활성 ZEP 공간</p>
+                    <p class="text-2xl font-bold text-gray-900 mt-1">{{ total_spaces }}</p>
+                </div>
+                <div class="bg-yellow-100 rounded-full p-2">
+                    <svg class="w-6 h-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path>
+                    </svg>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Hierarchical School/Class/Student List -->
+    <div class="space-y-4" id="schools-container">
+        {% for school_name, classes in schools.items %}
+        <div class="school-card bg-white rounded-lg shadow hover:shadow-md transition" data-school-name="{{ school_name }}">
+            <!-- School Header -->
+            <div class="p-4 bg-indigo-50 border-b border-indigo-100 flex justify-between items-center cursor-pointer"
+                 onclick="toggleSchool('school-{{ forloop.counter }}')">
+                <div class="flex items-center space-x-3">
+                    <div class="bg-indigo-600 rounded p-2">
+                        <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
+                        </svg>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-semibold text-gray-900">{{ school_name }}</h3>
+                        <p class="text-sm text-gray-600">학급 {{ classes|length }}개</p>
+                    </div>
+                </div>
+                <svg class="w-5 h-5 text-gray-400 chevron" style="transform: rotate(180deg);" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                </svg>
+            </div>
+
+            <!-- Classes (Collapsible) -->
+            <div id="school-{{ forloop.counter }}" class="">
+                <div class="p-4 bg-gray-50 space-y-3">
+                    {% for class in classes %}
+                    <div class="class-card bg-white rounded border border-gray-200" data-class-id="{{ class.id }}">
+                        <!-- Class Header - Entire row is clickable -->
+                        <div class="p-3 flex justify-between items-center cursor-pointer hover:bg-gray-50 transition" onclick="toggleClass('class-{{ class.id }}')">
+                            <div class="flex items-center space-x-3 flex-1">
+                                <div class="bg-green-100 rounded p-1.5">
+                                    <svg class="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
+                                    </svg>
+                                </div>
+                                <div class="flex-1">
+                                    <div class="flex items-center justify-between">
+                                        <div>
+                                            <p class="font-medium text-gray-900 class-name">{{ class.name }}</p>
+                                            <p class="text-xs text-gray-500">학생 <span class="student-count">{{ class.student_count }}</span>명 • ZEP 공간 {{ class.spaces_created }}개</p>
+                                        </div>
+                                        <div class="flex items-center space-x-2">
+                                            <button onclick="openStudentModal({{ class.id }}, '{{ class.name|escapejs }}'); event.stopPropagation();"
+                                                    class="text-xs bg-indigo-100 text-indigo-700 px-3 py-1.5 rounded hover:bg-indigo-200 transition inline-flex items-center">
+                                                <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                                                </svg>
+                                                학생 추가
+                                            </button>
+                                            <svg class="w-4 h-4 text-gray-400 chevron-small" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                                            </svg>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Students List (Collapsible) -->
+                        <div id="class-{{ class.id }}" class="hidden border-t border-gray-200">
+                            <div class="p-3 bg-gray-50">
+                                <div class="students-table">
+                                    {% if class.students %}
+                                    <table class="min-w-full text-sm">
+                                        <thead>
+                                            <tr class="text-xs text-gray-500">
+                                                <th class="text-left py-2 w-1/5">학생 이름</th>
+                                                <th class="text-left py-2 w-1/5">반/학년</th>
+                                                <th class="text-left py-2 w-1/5">ZEP 공간</th>
+                                                <th class="text-left py-2 w-1/5">상태</th>
+                                                <th class="text-left py-2 w-1/5">관리</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody class="text-gray-900">
+                                            {% for student in class.students %}
+                                            <tr class="border-t border-gray-200 student-row" data-student-name="{{ student.name|lower }}" data-student-id="{{ student.id }}">
+                                                <td class="py-2">{{ student.name }}</td>
+                                                <td class="py-2 text-gray-600">
+                                                    {% if student.class_number and student.grade %}
+                                                        {{ student.class_number }}반 / {{ student.grade }}학년
+                                                    {% elif student.class_number %}
+                                                        {{ student.class_number }}반
+                                                    {% elif student.grade %}
+                                                        {{ student.grade }}학년
+                                                    {% else %}
+                                                        -
+                                                    {% endif %}
+                                                </td>
+                                                <td class="py-2">
+                                                    {% if student.zep_space_url %}
+                                                    <a href="{{ student.zep_space_url }}" target="_blank"
+                                                       class="text-indigo-600 hover:text-indigo-800 inline-flex items-center text-xs">
+                                                        <span class="mr-1">공간 열기</span>
+                                                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
+                                                        </svg>
+                                                    </a>
+                                                    {% else %}
+                                                    <span class="text-gray-400 text-xs">미생성</span>
+                                                    {% endif %}
+                                                </td>
+                                                <td class="py-2">
+                                                    {% if student.is_space_created %}
+                                                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                                        생성됨
+                                                    </span>
+                                                    {% else %}
+                                                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600">
+                                                        미생성
+                                                    </span>
+                                                    {% endif %}
+                                                </td>
+                                                <td class="py-2">
+                                                    <button onclick="openEditStudentModal({{ student.id }}, '{{ student.name|escapejs }}', {{ student.class_number|default:'null' }}, {{ student.grade|default:'null' }}, '{{ student.zep_space_url|escapejs }}'); event.stopPropagation();"
+                                                            class="text-xs text-indigo-600 hover:text-indigo-800 font-medium">
+                                                        수정하기
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                    {% else %}
+                                    <div class="py-4 text-center text-gray-500 text-sm empty-message">
+                                        등록된 학생이 없습니다
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="bg-white rounded-lg shadow p-8 text-center text-gray-500">
+            <p class="mb-4">등록된 학급이 없습니다</p>
+            <button onclick="openSchoolModal()" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">
+                첫 학교 추가하기
+            </button>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- School Modal -->
+<div id="school-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
+    <div class="bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
+        <div class="p-6">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-xl font-bold text-gray-900">학교 추가</h3>
+                <button onclick="closeSchoolModal()" class="text-gray-400 hover:text-gray-600">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+            <form id="school-form" onsubmit="submitSchool(event)">
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">학교명 *</label>
+                        <input type="text" name="name" required
+                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                               placeholder="예: 서울초등학교">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">기타</label>
+                        <textarea name="notes" rows="3"
+                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                               placeholder="학교 관련 메모나 특이사항 (선택)"></textarea>
+                    </div>
+                </div>
+                <div class="mt-6 flex space-x-3">
+                    <button type="button" onclick="closeSchoolModal()"
+                            class="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">
+                        취소
+                    </button>
+                    <button type="submit"
+                            class="flex-1 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">
+                        추가
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Class Modal -->
+<div id="class-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
+    <div class="bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
+        <div class="p-6">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-xl font-bold text-gray-900">학급 추가</h3>
+                <button onclick="closeClassModal()" class="text-gray-400 hover:text-gray-600">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+            <form id="class-form" onsubmit="submitClass(event)">
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">학교 선택 *</label>
+                        <select name="school_id" required id="class-school-select"
+                                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                            <option value="">학교를 선택하세요</option>
+                            <!-- Will be populated dynamically -->
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">학급명 *</label>
+                        <input type="text" name="name" required
+                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                               placeholder="예: 1학년 A반">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">학년도</label>
+                        <input type="number" name="academic_year" value="2025"
+                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">학기</label>
+                        <select name="semester"
+                                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                            <option value="spring">1학기</option>
+                            <option value="fall">2학기</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="mt-6 flex space-x-3">
+                    <button type="button" onclick="closeClassModal()"
+                            class="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">
+                        취소
+                    </button>
+                    <button type="submit"
+                            class="flex-1 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">
+                        추가
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Student Modal -->
+<div id="student-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
+    <div class="bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
+        <div class="p-6">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-xl font-bold text-gray-900">학생 추가</h3>
+                <button onclick="closeStudentModal()" class="text-gray-400 hover:text-gray-600">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+            <form id="student-form" onsubmit="submitStudent(event)">
+                <input type="hidden" name="class_id" id="student-class-id">
+                <div class="mb-4">
+                    <p class="text-sm text-gray-600">학급: <span id="student-class-name" class="font-medium text-gray-900"></span></p>
+                </div>
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">학생 이름 *</label>
+                        <input type="text" name="name" required
+                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                               placeholder="예: 홍길동">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">반 번호</label>
+                        <input type="number" name="class_number" min="1"
+                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                               placeholder="예: 1 (1반)">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">학년</label>
+                        <input type="number" name="grade" min="1" max="6"
+                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                               placeholder="예: 3 (3학년)">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">ZEP 공간 URL</label>
+                        <input type="url" name="zep_space_url"
+                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                               placeholder="https://zep.us/... (선택)">
+                    </div>
+                </div>
+                <div class="mt-6 flex space-x-3">
+                    <button type="button" onclick="closeStudentModal()"
+                            class="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">
+                        취소
+                    </button>
+                    <button type="submit"
+                            class="flex-1 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">
+                        추가
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Student Modal -->
+<div id="edit-student-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
+    <div class="bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
+        <div class="p-6">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-xl font-bold text-gray-900">학생 정보 수정</h3>
+                <button onclick="closeEditStudentModal()" class="text-gray-400 hover:text-gray-600">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+            <form id="edit-student-form" onsubmit="submitEditStudent(event)">
+                <input type="hidden" name="student_id" id="edit-student-id">
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">학생 이름 *</label>
+                        <input type="text" name="name" id="edit-student-name" required
+                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                               placeholder="예: 홍길동">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">반 번호</label>
+                        <input type="number" name="class_number" id="edit-student-class-number" min="1"
+                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                               placeholder="예: 1 (1반)">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">학년</label>
+                        <input type="number" name="grade" id="edit-student-grade" min="1" max="6"
+                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                               placeholder="예: 3 (3학년)">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">ZEP 공간 URL</label>
+                        <input type="url" name="zep_space_url" id="edit-student-zep-url"
+                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                               placeholder="https://zep.us/... (선택)">
+                    </div>
+                </div>
+                <div class="mt-6 flex space-x-3">
+                    <button type="button" onclick="closeEditStudentModal()"
+                            class="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">
+                        취소
+                    </button>
+                    <button type="submit"
+                            class="flex-1 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">
+                        수정
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+// Get CSRF token
+function getCSRFToken() {
+    return document.querySelector('[name=csrfmiddlewaretoken]')?.value ||
+           document.cookie.split('; ').find(row => row.startsWith('csrftoken='))?.split('=')[1];
+}
+
+// School Modal Functions
+function openSchoolModal() {
+    document.getElementById('school-modal').classList.remove('hidden');
+    document.getElementById('school-form').reset();
+}
+
+function closeSchoolModal() {
+    document.getElementById('school-modal').classList.add('hidden');
+}
+
+async function submitSchool(event) {
+    event.preventDefault();
+    const form = event.target;
+    const data = {
+        name: form.name.value,
+        notes: form.notes.value
+    };
+
+    try {
+        const response = await fetch('{% url "dashboard:create_school" %}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCSRFToken()
+            },
+            body: JSON.stringify(data)
+        });
+
+        const result = await response.json();
+        if (result.success) {
+            alert('학교가 추가되었습니다!');
+            closeSchoolModal();
+            location.reload(); // Reload to show new school
+        } else {
+            alert('오류: ' + result.error);
+        }
+    } catch (error) {
+        alert('오류가 발생했습니다: ' + error);
+    }
+}
+
+// Class Modal Functions
+function openClassModal() {
+    document.getElementById('class-modal').classList.remove('hidden');
+    document.getElementById('class-form').reset();
+    populateSchoolSelect();
+}
+
+function closeClassModal() {
+    document.getElementById('class-modal').classList.add('hidden');
+}
+
+async function populateSchoolSelect() {
+    const select = document.getElementById('class-school-select');
+
+    try {
+        const response = await fetch('{% url "dashboard:get_schools" %}');
+
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const result = await response.json();
+        console.log('Schools loaded:', result); // Debug log
+
+        if (result.success) {
+            select.innerHTML = '<option value="">학교를 선택하세요</option>';
+
+            if (result.schools.length === 0) {
+                // No schools available
+                const noSchoolOption = document.createElement('option');
+                noSchoolOption.value = '';
+                noSchoolOption.textContent = '등록된 학교가 없습니다. 먼저 학교를 추가하세요.';
+                noSchoolOption.disabled = true;
+                select.appendChild(noSchoolOption);
+            } else {
+                result.schools.forEach(school => {
+                    const option = document.createElement('option');
+                    option.value = school.id;
+                    option.textContent = school.name;
+                    select.appendChild(option);
+                });
+            }
+        } else {
+            console.error('API returned error:', result.error);
+            select.innerHTML = '<option value="">오류: ' + (result.error || '알 수 없는 오류') + '</option>';
+        }
+    } catch (error) {
+        console.error('학교 목록 로드 실패:', error);
+        select.innerHTML = '<option value="">학교 목록을 불러올 수 없습니다</option>';
+    }
+}
+async function submitClass(event) {
+    event.preventDefault();
+    const form = event.target;
+    const data = {
+        school_id: form.school_id.value,
+        name: form.name.value,
+        academic_year: form.academic_year.value,
+        semester: form.semester.value
+    };
+
+    try {
+        const response = await fetch('{% url "dashboard:create_class" %}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCSRFToken()
+            },
+            body: JSON.stringify(data)
+        });
+
+        const result = await response.json();
+        if (result.success) {
+            alert('학급이 추가되었습니다!');
+            closeClassModal();
+            location.reload(); // Reload to show new class
+        } else {
+            alert('오류: ' + result.error);
+        }
+    } catch (error) {
+        alert('오류가 발생했습니다: ' + error);
+    }
+}
+
+// Student Modal Functions
+function openStudentModal(classId, className) {
+    document.getElementById('student-modal').classList.remove('hidden');
+    document.getElementById('student-form').reset();
+    document.getElementById('student-class-id').value = classId;
+    document.getElementById('student-class-name').textContent = className;
+}
+
+function closeStudentModal() {
+    document.getElementById('student-modal').classList.add('hidden');
+}
+
+// Edit Student Modal Functions
+function openEditStudentModal(studentId, name, classNumber, grade, zepSpaceUrl) {
+    document.getElementById('edit-student-modal').classList.remove('hidden');
+    document.getElementById('edit-student-id').value = studentId;
+    document.getElementById('edit-student-name').value = name;
+    document.getElementById('edit-student-class-number').value = classNumber || '';
+    document.getElementById('edit-student-grade').value = grade || '';
+    document.getElementById('edit-student-zep-url').value = zepSpaceUrl || '';
+}
+
+function closeEditStudentModal() {
+    document.getElementById('edit-student-modal').classList.add('hidden');
+}
+
+async function submitEditStudent(event) {
+    event.preventDefault();
+    const form = event.target;
+    const studentId = form.student_id.value;
+    const data = {
+        name: form.name.value,
+        class_number: form.class_number.value ? parseInt(form.class_number.value) : null,
+        grade: form.grade.value ? parseInt(form.grade.value) : null,
+        zep_space_url: form.zep_space_url.value
+    };
+
+    try {
+        const response = await fetch(`/dashboard/instructor/api/update-student/${studentId}/`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCSRFToken()
+            },
+            body: JSON.stringify(data)
+        });
+
+        const result = await response.json();
+        if (result.success) {
+            alert('학생 정보가 수정되었습니다!');
+            closeEditStudentModal();
+            location.reload(); // Reload to show updated data
+        } else {
+            alert('오류: ' + result.error);
+        }
+    } catch (error) {
+        alert('오류가 발생했습니다: ' + error);
+    }
+}
+
+async function submitStudent(event) {
+    event.preventDefault();
+    const form = event.target;
+    const data = {
+        class_id: form.class_id.value,
+        name: form.name.value,
+        class_number: form.class_number.value ? parseInt(form.class_number.value) : null,
+        grade: form.grade.value ? parseInt(form.grade.value) : null,
+        zep_space_url: form.zep_space_url.value
+    };
+
+    try {
+        const response = await fetch('{% url "dashboard:create_student" %}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCSRFToken()
+            },
+            body: JSON.stringify(data)
+        });
+
+        const result = await response.json();
+        if (result.success) {
+            alert('학생이 추가되었습니다!');
+            closeStudentModal();
+            
+            // Add student to table dynamically
+            addStudentToTable(data.class_id, result.student);
+        } else {
+            alert('오류: ' + result.error);
+        }
+    } catch (error) {
+        alert('오류가 발생했습니다: ' + error);
+    }
+}
+
+// Add student to table without page reload
+function addStudentToTable(classId, student) {
+    const classCard = document.querySelector(`[data-class-id="${classId}"]`);
+    if (!classCard) return;
+
+    const studentsTable = classCard.querySelector('.students-table');
+    const emptyMessage = studentsTable.querySelector('.empty-message');
+    
+    if (emptyMessage) {
+        // Replace empty message with table
+        studentsTable.innerHTML = `
+            <table class="min-w-full text-sm">
+                <thead>
+                    <tr class="text-xs text-gray-500">
+                        <th class="text-left py-2 w-1/4">학생 이름</th>
+                        <th class="text-left py-2 w-1/4">반/학년</th>
+                        <th class="text-left py-2 w-1/4">ZEP 공간</th>
+                        <th class="text-left py-2 w-1/4">상태</th>
+                    </tr>
+                </thead>
+                <tbody class="text-gray-900"></tbody>
+            </table>
+        `;
+    }
+
+    const tbody = studentsTable.querySelector('tbody');
+    const row = document.createElement('tr');
+    row.className = 'border-t border-gray-200 student-row';
+    row.setAttribute('data-student-name', student.name.toLowerCase());
+    
+    const spaceLink = student.zep_space_url ? 
+        `<a href="${student.zep_space_url}" target="_blank" class="text-indigo-600 hover:text-indigo-800 inline-flex items-center text-xs">
+            <span class="mr-1">공간 열기</span>
+            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
+            </svg>
+        </a>` :
+        '<span class="text-gray-400 text-xs">미생성</span>';
+
+    const statusBadge = student.is_space_created ?
+        '<span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">생성됨</span>' :
+        '<span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600">미생성</span>';
+
+    let classGradeInfo = '-';
+    if (student.class_number && student.grade) {
+        classGradeInfo = `${student.class_number}반 / ${student.grade}학년`;
+    } else if (student.class_number) {
+        classGradeInfo = `${student.class_number}반`;
+    } else if (student.grade) {
+        classGradeInfo = `${student.grade}학년`;
+    }
+
+    row.innerHTML = `
+        <td class="py-2">${student.name}</td>
+        <td class="py-2 text-gray-600">${classGradeInfo}</td>
+        <td class="py-2">${spaceLink}</td>
+        <td class="py-2">${statusBadge}</td>
+    `;
+    
+    tbody.appendChild(row);
+
+    // Update student count
+    const countSpan = classCard.querySelector('.student-count');
+    if (countSpan) {
+        const currentCount = parseInt(countSpan.textContent);
+        countSpan.textContent = currentCount + 1;
+    }
+}
+
+// Toggle school details
+function toggleSchool(id) {
+    const element = document.getElementById(id);
+    const chevron = event.currentTarget.querySelector('.chevron');
+    if (element.classList.contains('hidden')) {
+        element.classList.remove('hidden');
+        chevron.style.transform = 'rotate(180deg)';
+    } else {
+        element.classList.add('hidden');
+        chevron.style.transform = 'rotate(0deg)';
+    }
+}
+
+// Toggle class details
+function toggleClass(id) {
+    const element = document.getElementById(id);
+    const chevron = event.currentTarget.querySelector('.chevron-small');
+    if (element.classList.contains('hidden')) {
+        element.classList.remove('hidden');
+        if (chevron) chevron.style.transform = 'rotate(180deg)';
+    } else {
+        element.classList.add('hidden');
+        if (chevron) chevron.style.transform = 'rotate(0deg)';
+    }
+}
+
+// Filter students
+function filterStudents() {
+    const searchTerm = document.getElementById('search-student').value.toLowerCase();
+    const rows = document.querySelectorAll('.student-row');
+
+    rows.forEach(row => {
+        const name = row.getAttribute('data-student-name');
+        if (name.includes(searchTerm)) {
+            row.style.display = '';
+        } else {
+            row.style.display = 'none';
+        }
+    });
+
+    // Show/hide class cards based on visible students
+    document.querySelectorAll('.class-card').forEach(card => {
+        const visibleStudents = card.querySelectorAll('.student-row[style=""]').length;
+        const allStudents = card.querySelectorAll('.student-row').length;
+        if (searchTerm && visibleStudents === 0 && allStudents > 0) {
+            card.style.display = 'none';
+        } else {
+            card.style.display = '';
+        }
+    });
+
+    // Show/hide school cards based on visible classes
+    document.querySelectorAll('.school-card').forEach(card => {
+        const visibleClasses = card.querySelectorAll('.class-card:not([style*="none"])').length;
+        if (searchTerm && visibleClasses === 0) {
+            card.style.display = 'none';
+        } else {
+            card.style.display = '';
+        }
+    });
+}
+
+// Section switching (for future use)
+function showSection(section) {
+    document.getElementById('my-classes-section').style.display = 'block';
+}
+
+// Close modals on escape key
+document.addEventListener('keydown', function(event) {
+    if (event.key === 'Escape') {
+        closeSchoolModal();
+        closeClassModal();
+        closeStudentModal();
+        closeEditStudentModal();
+    }
+});
+</script>
+{% endblock %}

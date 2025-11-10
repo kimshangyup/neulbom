@@ -1,0 +1,238 @@
+<story-context id="bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>2</epicId>
+    <storyId>2.2</storyId>
+    <title>School and Class Data Models</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-04</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/stories/2-2-school-and-class-data-models.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>a developer</asA>
+    <iWant>hierarchical data models for schools, classes, and students</iWant>
+    <soThat>the system can maintain organizational structure</soThat>
+    <tasks>
+- Task 1: Verify existing School and Class models or create from scratch (AC: 1, 2, 6, 7)
+  - Check if `students/models.py` already contains School and Class models (referenced in Story 2.1)
+  - If models exist: Review and enhance with all required fields
+  - If models missing: Create School model with name, logo, address, contact_phone, contact_email
+  - If models missing: Create Class model with name, school FK, instructor FK, academic_year, semester, description
+  - Add appropriate indexes: School.name, Class.academic_year + semester
+  - Configure cascade delete: School → Class (CASCADE), Class → Student (SET_NULL or PROTECT)
+  - Add Meta class with ordering and verbose names
+  - Add `__str__` methods for admin display
+
+- Task 2: Create Student model with ZEP integration fields (AC: 3, 6, 7)
+  - Create Student model in `students/models.py`
+  - Add user FK to User model with limit_choices_to role='student'
+  - Add fields: name, student_id (unique), grade, class_assigned FK
+  - Add generated_email field (format: {student_id}@seoul.zep.internal, unique)
+  - Add zep_space_url field (URLField, blank=True for pending creations)
+  - Add timestamps: created_at, updated_at
+  - Add indexes on student_id and generated_email for fast lookups
+  - Configure delete behavior: class deletion should SET_NULL or PROTECT students
+  - Add validation for email format in save() method
+
+- Task 3: Create and apply database migrations (AC: 4)
+  - Run `python manage.py makemigrations students`
+  - Review generated migration file for correctness
+  - Run `python manage.py migrate students`
+  - Verify all models created in database with correct schema
+  - Check indexes created properly using `SHOW INDEX FROM students_school`
+  - Test migrations are reversible (can migrate backward if needed)
+
+- Task 4: Register models in Django admin with custom admin classes (AC: 5)
+  - Create SchoolAdmin with list_display, search_fields, list_filter
+  - Create ClassAdmin with list_display, search_fields, list_filter, select_related optimization
+  - Create StudentAdmin with list_display, search_fields, list_filter, readonly_fields
+  - Register all three models using @admin.register decorator
+  - Add inline admin for Classes within School admin (optional but recommended)
+  - Test CRUD operations in Django admin interface
+
+- Task 5: Create model relationships and helper methods (AC: 6, 7)
+  - Add reverse relationship accessors: School.classes, Class.students
+  - Create helper methods: School.class_count(), Class.student_count()
+  - Add property: Student.is_space_created (checks if zep_space_url exists)
+  - Implement custom queryset methods if needed (e.g., active_students)
+  - Document all relationships in model docstrings
+
+- Task 6: Write comprehensive model tests (All ACs)
+  - Test School model creation and field validation
+  - Test Class model creation with FK relationships
+  - Test Student model creation with user relationship
+  - Test cascade delete behavior for all relationships
+  - Test unique constraints (student_id, generated_email)
+  - Test helper methods (class_count, student_count, is_space_created)
+  - Test Django admin registration and CRUD operations
+  - Run full test suite and ensure no regressions
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+1. School model created with fields: name, logo, address, contact info
+2. Class model created with fields: name, school (FK), instructor (FK), academic year, semester
+3. Student model created with fields: name, student_id, class (FK), generated_email, zep_space_url
+4. Database migrations created and applied successfully
+5. Django admin interface allows CRUD operations for schools and classes
+6. Models include appropriate indexes for performance
+7. Cascade delete configured appropriately (e.g., deleting class doesn't delete students)
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/PRD.md</path>
+        <title>Product Requirements Document</title>
+        <section>Functional Requirements</section>
+        <snippet>FR010: System shall maintain a hierarchical data structure linking schools, classes, and student spaces. FR011: System shall display searchable tables of all spaces with associated ZEP URLs.</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Decision Architecture</title>
+        <section>Data Architecture - Core Data Models</section>
+        <snippet>School, Class, and Student models form hierarchical structure. School (1) → (N) Class → (N) Student. Student linked to User via OneToOneField. Each student has generated_email and zep_space_url.</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Decision Architecture</title>
+        <section>Data Relationships</section>
+        <snippet>School → Class (CASCADE), User (Instructor) → Class (1:N), Class → Student (SET_NULL for class deletion), Student → FailedSpaceCreation (tracking failed space creation attempts).</snippet>
+      </doc>
+    </docs>
+    <code>
+      <artifact>
+        <path>students/models.py</path>
+        <kind>model</kind>
+        <symbol>School</symbol>
+        <lines>5-58</lines>
+        <reason>School model ALREADY EXISTS with name, logo, address, contact_phone, contact_email fields. Task 1 should verify and enhance if needed, not recreate.</reason>
+      </artifact>
+      <artifact>
+        <path>students/models.py</path>
+        <kind>model</kind>
+        <symbol>Class</symbol>
+        <lines>60-128</lines>
+        <reason>Class model ALREADY EXISTS with school FK, instructor FK, academic_year, semester, description. Task 1 should verify completeness.</reason>
+      </artifact>
+      <artifact>
+        <path>students/models.py</path>
+        <kind>model</kind>
+        <symbol>Student</symbol>
+        <lines>130-209</lines>
+        <reason>Student model ALREADY EXISTS with user FK, student_id, name, grade, class_assignment FK, generated_email, zep_space_url. Task 2 should verify and possibly enhance.</reason>
+      </artifact>
+      <artifact>
+        <path>students/models.py</path>
+        <kind>model</kind>
+        <symbol>FailedSpaceCreation</symbol>
+        <lines>211-257</lines>
+        <reason>FailedSpaceCreation model for tracking failed ZEP space creation attempts - used in bulk operations.</reason>
+      </artifact>
+      <artifact>
+        <path>authentication/models.py</path>
+        <kind>model</kind>
+        <symbol>User</symbol>
+        <lines>5-42</lines>
+        <reason>Custom User model with role field (admin/instructor/student), affiliated_school FK - base model for Student OneToOneField.</reason>
+      </artifact>
+    </code>
+    <dependencies>
+      <python>
+        <package name="Django" version="4.2.16"/>
+        <package name="mysqlclient" version=">=2.2.0"/>
+        <package name="pandas" version=">=2.0.0"/>
+        <package name="python-decouple" version=">=3.8"/>
+      </python>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+- **CRITICAL**: School, Class, and Student models ALREADY EXIST in students/models.py (lines 5-209)
+- **Task 1 Action**: VERIFY existing School and Class models, enhance if missing fields (unlikely), DO NOT recreate
+- **Task 2 Action**: VERIFY existing Student model, check if all AC fields present, enhance if needed
+- **Task 3 Focus**: Only create NEW migrations if models were modified; existing migrations likely already applied
+- Multi-app Django structure: Students app already contains all three models
+- Database: MySQL 8.0 with mysqlclient driver
+- Foreign key naming: {model}_id (e.g., school_id, class_id)
+- Boolean fields: Status name or is_ prefix (e.g., is_space_created property on Student)
+- Cascade delete configuration:
+  - School → Class: CASCADE (delete classes when school deleted)
+  - Class → Student: SET_NULL (preserve students, unassign from class)
+  - User (instructor) → Class: SET_NULL (preserve class, unassign instructor)
+  - User (student) → Student: CASCADE (delete student profile with user account)
+- Indexes required: School.name, Class (school, academic_year, semester), Student (student_id, class_assignment)
+- Django admin: Use @admin.register decorator, list_display with select_related for performance
+- Testing: Django TestCase, test model creation, FK relationships, cascade behavior, unique constraints
+- Korean localization: verbose_name and help_text in Korean, __str__ methods return Korean-friendly names
+</constraints>
+
+  <interfaces>
+    <interface>
+      <name>School Model</name>
+      <kind>Django Model</kind>
+      <signature>students.School (name, logo, address, contact_phone, contact_email, created_at, updated_at)</signature>
+      <path>students/models.py:5-58</path>
+    </interface>
+    <interface>
+      <name>Class Model</name>
+      <kind>Django Model</kind>
+      <signature>students.Class (name, school FK, instructor FK, academic_year, semester, description, created_at, updated_at)</signature>
+      <path>students/models.py:60-128</path>
+    </interface>
+    <interface>
+      <name>Student Model</name>
+      <kind>Django Model</kind>
+      <signature>students.Student (user FK, student_id, name, grade, class_assignment FK, generated_email, zep_space_url, is_public, notes, created_at, updated_at)</signature>
+      <path>students/models.py:130-209</path>
+    </interface>
+    <interface>
+      <name>User Model</name>
+      <kind>Django Model</kind>
+      <signature>authentication.User (role, affiliated_school FK, training_completed) extends AbstractUser</signature>
+      <path>authentication/models.py:5-42</path>
+    </interface>
+    <interface>
+      <name>FailedSpaceCreation Model</name>
+      <kind>Django Model</kind>
+      <signature>students.FailedSpaceCreation (student FK, error_message, retry_count, resolved, created_at)</signature>
+      <path>students/models.py:211-257</path>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+Django TestCase framework with 97 tests currently passing. Test models for creation, FK relationships, cascade delete behavior, and unique constraints. Test Django admin registration and CRUD operations. Use TestCase.setUp() for fixture creation. Follow patterns from instructors/tests.py (24 tests for Instructor model). Coverage should include: model instantiation, field validation, relationship queries (select_related/prefetch_related), cascade delete scenarios, unique constraint violations, and admin interface accessibility.
+    </standards>
+    <locations>
+students/tests.py - main test file for students app models
+    </locations>
+    <ideas>
+- AC1: Test School model creation with all required fields (name, logo, address, contact_phone, contact_email)
+- AC1: Test School.name unique constraint
+- AC1: Test School.__str__() returns name
+- AC1: Test School.class_count() method returns correct count
+- AC2: Test Class model creation with FK to School and Instructor
+- AC2: Test Class with all fields (name, school, instructor, academic_year, semester, description)
+- AC2: Test Class.__str__() returns formatted string with school name and academic info
+- AC2: Test Class.student_count() method returns correct count
+- AC3: Test Student model creation with FK to User and Class
+- AC3: Test Student with all required fields (user, student_id, name, grade, class_assignment, generated_email, zep_space_url)
+- AC3: Test Student.student_id unique constraint
+- AC3: Test Student.generated_email unique constraint
+- AC3: Test Student.is_space_created property (True when zep_space_url not empty)
+- AC4: Test migrations are applied correctly (check database schema)
+- AC5: Test SchoolAdmin registered and accessible in Django admin
+- AC5: Test ClassAdmin registered and accessible in Django admin
+- AC5: Test StudentAdmin registered and accessible in Django admin
+- AC6: Test indexes created on School.name
+- AC6: Test indexes created on Class (school, academic_year, semester)
+- AC6: Test indexes created on Student.student_id
+- AC7: Test School deletion cascades to Class (deleting school deletes classes)
+- AC7: Test Class deletion SET_NULL for Students (deleting class preserves students, unassigns class)
+- AC7: Test User (instructor) deletion SET_NULL for Class (preserve class, unassign instructor)
+- AC7: Test User (student) deletion CASCADE for Student profile
+    </ideas>
+  </tests>
+</story-context>

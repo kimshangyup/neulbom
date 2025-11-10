@@ -1,0 +1,288 @@
+<story-context id="bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>1</epicId>
+    <storyId>2</storyId>
+    <title>User Model and Role-Based Authentication</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-03</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/stories/1-2-user-model-and-role-based-authentication.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>a system</asA>
+    <iWant>user accounts with role differentiation (administrator, instructor, student)</iWant>
+    <soThat>users can authenticate with appropriate permissions</soThat>
+    <tasks>
+      <task id="1" ac="1">
+        <description>Create Custom User Model</description>
+        <subtasks>
+          <subtask>Extend Django AbstractUser in accounts/models.py</subtask>
+          <subtask>Add role field with choices (admin/instructor/student)</subtask>
+          <subtask>Add affiliated_school foreign key (nullable)</subtask>
+          <subtask>Add training_completed boolean field</subtask>
+          <subtask>Configure AUTH_USER_MODEL in settings.py</subtask>
+          <subtask>Create and run migrations</subtask>
+        </subtasks>
+      </task>
+      <task id="2" ac="2,3,4">
+        <description>Implement authentication views</description>
+        <subtasks>
+          <subtask>Create login view with ID/PW form</subtask>
+          <subtask>Create login template with Tailwind CSS styling</subtask>
+          <subtask>Implement form validation and error handling</subtask>
+          <subtask>Create logout view</subtask>
+          <subtask>Configure URL patterns for auth endpoints</subtask>
+          <subtask>Test login/logout flow for all three roles</subtask>
+        </subtasks>
+      </task>
+      <task id="3" ac="5">
+        <description>Configure password security</description>
+        <subtasks>
+          <subtask>Verify Django PBKDF2 password hashing is enabled (default)</subtask>
+          <subtask>Configure password validators in settings.py</subtask>
+          <subtask>Set minimum password length (8 characters)</subtask>
+          <subtask>Require letters and numbers in password</subtask>
+          <subtask>Test password strength validation</subtask>
+        </subtasks>
+      </task>
+      <task id="4" ac="6">
+        <description>Configure session management</description>
+        <subtasks>
+          <subtask>Set SESSION_COOKIE_SECURE = True (HTTPS only)</subtask>
+          <subtask>Set SESSION_COOKIE_HTTPONLY = True</subtask>
+          <subtask>Set SESSION_COOKIE_SAMESITE = 'Lax'</subtask>
+          <subtask>Set SESSION_COOKIE_AGE = 86400 (24 hours)</subtask>
+          <subtask>Configure database-backed sessions</subtask>
+          <subtask>Test session timeout behavior</subtask>
+        </subtasks>
+      </task>
+      <task id="5" ac="7">
+        <description>Set up Django admin for user management</description>
+        <subtasks>
+          <subtask>Register User model in accounts/admin.py</subtask>
+          <subtask>Configure admin fieldsets for user creation</subtask>
+          <subtask>Test creating users with each role via admin</subtask>
+          <subtask>Verify role-based permissions display correctly</subtask>
+          <subtask>Add list_display fields for better admin UX</subtask>
+        </subtasks>
+      </task>
+      <task id="6">
+        <description>Testing and validation</description>
+        <subtasks>
+          <subtask>Write unit tests for User model</subtask>
+          <subtask>Write tests for login/logout views</subtask>
+          <subtask>Test password validation requirements</subtask>
+          <subtask>Test session security settings</subtask>
+          <subtask>Verify migrations run without errors</subtask>
+          <subtask>Test admin user creation for all roles</subtask>
+        </subtasks>
+      </task>
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <criterion id="1">Custom User model extends Django AbstractUser with role field (admin/instructor/student)</criterion>
+    <criterion id="2">ID/PW authentication implemented using Django authentication system</criterion>
+    <criterion id="3">Login page created with form validation and error handling</criterion>
+    <criterion id="4">Logout functionality implemented</criterion>
+    <criterion id="5">Password security follows Django best practices (hashing, strength requirements)</criterion>
+    <criterion id="6">Session management configured with appropriate timeout</criterion>
+    <criterion id="7">User creation via Django admin works for all three roles</criterion>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Decision Architecture</title>
+        <section>Data Architecture - Core Data Models</section>
+        <snippet>Custom User model extends AbstractUser with role field (admin/instructor/student), affiliated_school FK, and training_completed boolean. AUTH_USER_MODEL must be set before first migration.</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Decision Architecture</title>
+        <section>Security Architecture - Authentication & Authorization</section>
+        <snippet>Django PBKDF2 password hashing (default). Minimum 8 characters with letters and numbers. SESSION_COOKIE_SECURE=True, SESSION_COOKIE_HTTPONLY=True, SESSION_COOKIE_SAMESITE='Lax', SESSION_COOKIE_AGE=86400 (24 hours).</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Decision Architecture</title>
+        <section>Implementation Patterns - View Structure</section>
+        <snippet>Consistent view pattern: POST request handling with form validation, messages.success/error for user feedback in Korean, redirect on success. Import order: stdlib → third-party → local.</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Decision Architecture</title>
+        <section>Implementation Patterns - URL Patterns</section>
+        <snippet>URL patterns use kebab-case format. URL names use app_namespace:action pattern (e.g., accounts:login, accounts:logout). Template files in {app}/templates/{app}/{filename}.html.</snippet>
+      </doc>
+      <doc>
+        <path>docs/epics.md</path>
+        <title>Epic Breakdown</title>
+        <section>Story 1.2 - User Model and Role-Based Authentication</section>
+        <snippet>Custom User model with role field (admin/instructor/student). ID/PW authentication using Django built-in system. Login/logout pages. Password security (hashing, strength). Session management with 24-hour timeout. Django admin for user creation.</snippet>
+      </doc>
+      <doc>
+        <path>docs/PRD.md</path>
+        <title>Product Requirements Document</title>
+        <section>Functional Requirements - Authentication & Authorization</section>
+        <snippet>FR001: System shall support ID/PW based authentication for all user roles. FR002: System shall enforce role-based access control with three permission levels: administrator, instructor, and student.</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Decision Architecture</title>
+        <section>Decision Summary</section>
+        <snippet>Authentication: Django built-in auth with CustomUser, role field. No social login needed. Database sessions (no Redis). Server-side rendering with Django Templates + Tailwind CSS.</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Decision Architecture</title>
+        <section>Error Handling Strategy</section>
+        <snippet>User-facing messages in Korean, friendly tone. Log messages in English, technical. Use messages.success/error/warning for user feedback. All user operations should provide clear feedback.</snippet>
+      </doc>
+      <doc>
+        <path>stories/1-1-django-project-setup-and-deployment-pipeline.md</path>
+        <title>Previous Story 1.1</title>
+        <section>Dev Agent Record - Completion Notes</section>
+        <snippet>Django 4.2 project configured. 4 apps created: authentication/, instructors/, students/, spaces/. settings.py has environment variable support, MySQL with SQLite fallback, security settings (SESSION_COOKIE_SECURE, CSRF, HSTS), logging configuration.</snippet>
+      </doc>
+      <doc>
+        <path>stories/1-1-django-project-setup-and-deployment-pipeline.md</path>
+        <title>Previous Story 1.1</title>
+        <section>Dev Notes - Architecture Constraints</section>
+        <snippet>Python 3.8.x, Django 4.2 LTS, MySQL 8.0 (SQLite for dev). Multi-app structure. Korean user messages, English logs. Test organization: single tests.py for small apps. Django TestCase for unit tests.</snippet>
+      </doc>
+    </docs>
+    <code>
+      <artifact>
+        <path>neulbom/settings.py</path>
+        <kind>config</kind>
+        <symbol>Django settings</symbol>
+        <lines>all</lines>
+        <reason>Needs AUTH_USER_MODEL configuration, password validators, and session settings. Already has security settings and environment variable support from Story 1.1.</reason>
+      </artifact>
+      <artifact>
+        <path>neulbom/urls.py</path>
+        <kind>config</kind>
+        <symbol>Root URL configuration</symbol>
+        <lines>all</lines>
+        <reason>Needs authentication URL patterns to be included (accounts.urls or authentication.urls)</reason>
+      </artifact>
+      <artifact>
+        <path>authentication/models.py</path>
+        <kind>model</kind>
+        <symbol>User model placeholder</symbol>
+        <lines>all</lines>
+        <reason>Empty file that needs Custom User model extending AbstractUser with role, affiliated_school, training_completed fields</reason>
+      </artifact>
+      <artifact>
+        <path>authentication/views.py</path>
+        <kind>view</kind>
+        <symbol>Authentication views placeholder</symbol>
+        <lines>all</lines>
+        <reason>Empty file that needs login_view and logout_view implementation</reason>
+      </artifact>
+      <artifact>
+        <path>authentication/admin.py</path>
+        <kind>admin</kind>
+        <symbol>Django admin config placeholder</symbol>
+        <lines>all</lines>
+        <reason>Empty file that needs User model registration with custom fieldsets</reason>
+      </artifact>
+      <artifact>
+        <path>authentication/tests.py</path>
+        <kind>test</kind>
+        <symbol>Test placeholder</symbol>
+        <lines>all</lines>
+        <reason>Empty file that needs User model tests, login/logout tests, password validation tests</reason>
+      </artifact>
+      <artifact>
+        <path>neulbom/tests/test_health.py</path>
+        <kind>test</kind>
+        <symbol>Health check tests</symbol>
+        <lines>all</lines>
+        <reason>Example test structure from Story 1.1 - follow same patterns for authentication tests</reason>
+      </artifact>
+    </code>
+    <dependencies>
+      <python>
+        <package name="Django" version="4.2" />
+        <package name="mysqlclient" version="latest stable" note="Database driver" />
+      </python>
+      <system>
+        <package name="Python" version="3.8.x" />
+        <package name="MySQL" version="8.0" note="Production database (SQLite for dev)" />
+      </system>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint>Use existing authentication/ app (not accounts/ as specified in architecture - Story 1.1 already created authentication/)</constraint>
+    <constraint>AUTH_USER_MODEL must be set to 'authentication.User' before running first migration</constraint>
+    <constraint>User model must extend Django AbstractUser (not AbstractBaseUser or custom implementation)</constraint>
+    <constraint>Role field must have exactly 3 choices: admin, instructor, student</constraint>
+    <constraint>Password validators: MinimumLengthValidator(8), UserAttributeSimilarityValidator, CommonPasswordValidator, NumericPasswordValidator</constraint>
+    <constraint>Session settings: SECURE=True (production), HTTPONLY=True, SAMESITE='Lax', AGE=86400 (24 hours)</constraint>
+    <constraint>Database sessions (no Redis/cache backend - ADR-004)</constraint>
+    <constraint>User-facing messages in Korean, log messages in English</constraint>
+    <constraint>Login URL: /authentication/login/ (or /accounts/login/ if renaming app)</constraint>
+    <constraint>Logout URL: /authentication/logout/ (or /accounts/logout/)</constraint>
+    <constraint>Use Django's built-in authenticate(), login(), logout() functions</constraint>
+    <constraint>Templates location: authentication/templates/authentication/*.html</constraint>
+    <constraint>Use Tailwind CSS for login page styling</constraint>
+    <constraint>CSRF protection required on all POST forms</constraint>
+    <constraint>Follow import order: stdlib → third-party → local apps</constraint>
+  </constraints>
+  <interfaces>
+    <interface>
+      <name>User Model</name>
+      <kind>Django model</kind>
+      <signature>class User(AbstractUser): role CharField(choices), affiliated_school ForeignKey, training_completed BooleanField</signature>
+      <path>authentication/models.py</path>
+    </interface>
+    <interface>
+      <name>Login View</name>
+      <kind>Django view</kind>
+      <signature>def login_view(request) → render/redirect</signature>
+      <path>authentication/views.py</path>
+    </interface>
+    <interface>
+      <name>Logout View</name>
+      <kind>Django view</kind>
+      <signature>def logout_view(request) → redirect</signature>
+      <path>authentication/views.py</path>
+    </interface>
+    <interface>
+      <name>Django Admin</name>
+      <kind>Admin interface</kind>
+      <signature>UserAdmin with custom fieldsets for role, school, training_completed</signature>
+      <path>authentication/admin.py</path>
+    </interface>
+  </interfaces>
+  <tests>
+    <standards>Use Django's built-in TestCase for unit tests. Follow patterns established in neulbom/tests/test_health.py from Story 1.1. Test organization: single tests.py file for authentication app. Coverage reporting integrated into CI pipeline. All tests run automatically via GitHub Actions.</standards>
+    <locations>
+      <location>authentication/tests.py</location>
+    </locations>
+    <ideas>
+      <idea ac="1">Unit test for User model - verify role field choices, affiliated_school FK, training_completed field</idea>
+      <idea ac="1">Test User model creation with each role (admin, instructor, student)</idea>
+      <idea ac="2,3">Integration test for login view - successful authentication with valid credentials</idea>
+      <idea ac="2,3">Integration test for login view - failed authentication with invalid credentials</idea>
+      <idea ac="3">Test login form validation - empty username/password fields</idea>
+      <idea ac="3">Test login error messages display correctly in Korean</idea>
+      <idea ac="4">Integration test for logout view - verify session cleared after logout</idea>
+      <idea ac="4">Test logout redirect to login page</idea>
+      <idea ac="5">Test password validation - minimum 8 characters requirement</idea>
+      <idea ac="5">Test password validation - letters and numbers requirement</idea>
+      <idea ac="5">Test password hashing - verify PBKDF2 algorithm used</idea>
+      <idea ac="6">Test session cookie settings - SECURE, HTTPONLY, SAMESITE, AGE</idea>
+      <idea ac="6">Test session timeout - verify 24-hour expiration</idea>
+      <idea ac="7">Test Django admin user creation - admin role</idea>
+      <idea ac="7">Test Django admin user creation - instructor role</idea>
+      <idea ac="7">Test Django admin user creation - student role</idea>
+      <idea ac="1">Test migrations run without errors</idea>
+    </ideas>
+  </tests>
+</story-context>

@@ -1,0 +1,168 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ko" class="h-full bg-gray-50">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>강사 관리 - 늘봄학교 시스템</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="h-full">
+    <div class="min-h-full">
+        <!-- Navigation -->
+        <nav class="bg-indigo-600">
+            <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+                <div class="flex h-16 items-center justify-between">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0">
+                            <h1 class="text-white text-xl font-bold">늘봄학교 관리</h1>
+                        </div>
+                        <div class="ml-10 flex items-baseline space-x-4">
+                            <a href="/admin/" class="text-white hover:bg-indigo-500 px-3 py-2 rounded-md text-sm font-medium">대시보드</a>
+                            <a href="{% url 'instructors:list' %}" class="bg-indigo-700 text-white px-3 py-2 rounded-md text-sm font-medium">강사 관리</a>
+                        </div>
+                    </div>
+                    <div class="ml-4 flex items-center md:ml-6">
+                        <span class="text-white text-sm mr-4">{{ request.user.get_full_name }}</span>
+                        <a href="{% url 'authentication:logout' %}" class="text-white hover:bg-indigo-500 px-3 py-2 rounded-md text-sm font-medium">로그아웃</a>
+                    </div>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="py-10">
+            <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+                <!-- Messages -->
+                {% if messages %}
+                    <div class="mb-6">
+                        {% for message in messages %}
+                            <div class="rounded-md {% if message.tags == 'error' %}bg-red-50 border-l-4 border-red-400{% else %}bg-green-50 border-l-4 border-green-400{% endif %} p-4 mb-4">
+                                <div class="flex">
+                                    <div class="ml-3">
+                                        <p class="text-sm {% if message.tags == 'error' %}text-red-700{% else %}text-green-700{% endif %}">{{ message }}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+
+                <!-- Header -->
+                <div class="md:flex md:items-center md:justify-between">
+                    <div class="min-w-0 flex-1">
+                        <h2 class="text-2xl font-bold leading-7 text-gray-900 sm:truncate sm:text-3xl sm:tracking-tight">
+                            강사 관리
+                        </h2>
+                    </div>
+                    <div class="mt-4 flex md:ml-4 md:mt-0">
+                        <a href="{% url 'instructors:create' %}" class="inline-flex items-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500">
+                            + 새 강사 등록
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Search and Filter -->
+                <div class="mt-6 bg-white shadow rounded-lg p-6">
+                    <form method="GET" class="grid grid-cols-1 gap-4 sm:grid-cols-4">
+                        <div class="sm:col-span-2">
+                            <label for="search" class="block text-sm font-medium text-gray-700">검색</label>
+                            <input type="text" name="search" id="search" value="{{ search_query }}"
+                                   placeholder="이름, 아이디, 이메일"
+                                   class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                        </div>
+                        <div>
+                            <label for="school" class="block text-sm font-medium text-gray-700">학교</label>
+                            <select name="school" id="school" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                                <option value="">전체</option>
+                                {% for school in schools %}
+                                    <option value="{{ school.id }}" {% if selected_school == school.id|stringformat:"s" %}selected{% endif %}>{{ school.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div>
+                            <label for="training" class="block text-sm font-medium text-gray-700">교육 이수</label>
+                            <select name="training" id="training" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                                <option value="">전체</option>
+                                <option value="completed" {% if selected_training == 'completed' %}selected{% endif %}>완료</option>
+                                <option value="pending" {% if selected_training == 'pending' %}selected{% endif %}>미완료</option>
+                            </select>
+                        </div>
+                        <div class="sm:col-span-4 flex justify-end space-x-2">
+                            <button type="submit" class="inline-flex items-center rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500">
+                                검색
+                            </button>
+                            <a href="{% url 'instructors:list' %}" class="inline-flex items-center rounded-md bg-white px-4 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
+                                초기화
+                            </a>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Instructors Table -->
+                <div class="mt-8 flow-root">
+                    <div class="-mx-4 -my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
+                        <div class="inline-block min-w-full py-2 align-middle sm:px-6 lg:px-8">
+                            <div class="overflow-hidden shadow ring-1 ring-black ring-opacity-5 sm:rounded-lg">
+                                <table class="min-w-full divide-y divide-gray-300">
+                                    <thead class="bg-gray-50">
+                                        <tr>
+                                            <th scope="col" class="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6">이름</th>
+                                            <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">아이디</th>
+                                            <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">소속 학교</th>
+                                            <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">학급 수</th>
+                                            <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">교육 이수</th>
+                                            <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">최근 로그인</th>
+                                            <th scope="col" class="relative py-3.5 pl-3 pr-4 sm:pr-6">
+                                                <span class="sr-only">관리</span>
+                                            </th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-gray-200 bg-white">
+                                        {% for instructor in instructors %}
+                                            <tr>
+                                                <td class="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-6">
+                                                    {{ instructor.get_full_name|default:instructor.username }}
+                                                </td>
+                                                <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">{{ instructor.username }}</td>
+                                                <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
+                                                    {{ instructor.affiliated_school|default:"-" }}
+                                                </td>
+                                                <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">{{ instructor.class_count }}</td>
+                                                <td class="whitespace-nowrap px-3 py-4 text-sm">
+                                                    {% if instructor.training_completed %}
+                                                        <span class="inline-flex items-center rounded-md bg-green-50 px-2 py-1 text-xs font-medium text-green-700 ring-1 ring-inset ring-green-600/20">완료</span>
+                                                    {% else %}
+                                                        <span class="inline-flex items-center rounded-md bg-gray-50 px-2 py-1 text-xs font-medium text-gray-600 ring-1 ring-inset ring-gray-500/10">미완료</span>
+                                                    {% endif %}
+                                                </td>
+                                                <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
+                                                    {% if instructor.last_login %}
+                                                        {{ instructor.last_login|date:"Y-m-d H:i" }}
+                                                    {% else %}
+                                                        -
+                                                    {% endif %}
+                                                </td>
+                                                <td class="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
+                                                    <a href="{% url 'instructors:detail' instructor.pk %}" class="text-indigo-600 hover:text-indigo-900 mr-4">상세</a>
+                                                    <a href="{% url 'instructors:edit' instructor.pk %}" class="text-indigo-600 hover:text-indigo-900">수정</a>
+                                                </td>
+                                            </tr>
+                                        {% empty %}
+                                            <tr>
+                                                <td colspan="7" class="px-3 py-8 text-center text-sm text-gray-500">
+                                                    등록된 강사가 없습니다.
+                                                </td>
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+</body>
+</html>

@@ -1,0 +1,31 @@
+[Unit]
+Description=uWSGI instance to serve Neulbom Django application
+After=network.target mysql.service
+Requires=mysql.service
+
+[Service]
+User=www-data
+Group=www-data
+WorkingDirectory=/var/www/neulbom
+Environment="PATH=/var/www/neulbom/venv/bin"
+EnvironmentFile=/var/www/neulbom/.env
+
+ExecStartPre=/bin/mkdir -p /run/uwsgi
+ExecStartPre=/bin/chown www-data:www-data /run/uwsgi
+ExecStart=/var/www/neulbom/venv/bin/uwsgi --ini /etc/uwsgi/apps-enabled/neulbom.ini
+
+# Restart policy
+Restart=always
+RestartSec=10s
+
+# Security
+NoNewPrivileges=true
+PrivateTmp=true
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=neulbom
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,187 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ko" class="h-full bg-gray-50">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ title }} - 늘봄학교 시스템</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="h-full">
+    <div class="min-h-full">
+        <!-- Navigation -->
+        <nav class="bg-indigo-600">
+            <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+                <div class="flex h-16 items-center justify-between">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0">
+                            <h1 class="text-white text-xl font-bold">늘봄학교 관리</h1>
+                        </div>
+                        <div class="ml-10 flex items-baseline space-x-4">
+                            <a href="/admin/" class="text-white hover:bg-indigo-500 px-3 py-2 rounded-md text-sm font-medium">대시보드</a>
+                            <a href="{% url 'instructors:list' %}" class="bg-indigo-700 text-white px-3 py-2 rounded-md text-sm font-medium">강사 관리</a>
+                        </div>
+                    </div>
+                    <div class="ml-4 flex items-center md:ml-6">
+                        <span class="text-white text-sm mr-4">{{ request.user.get_full_name }}</span>
+                        <a href="{% url 'authentication:logout' %}" class="text-white hover:bg-indigo-500 px-3 py-2 rounded-md text-sm font-medium">로그아웃</a>
+                    </div>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="py-10">
+            <div class="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8">
+                <!-- Messages -->
+                {% if messages %}
+                    <div class="mb-6">
+                        {% for message in messages %}
+                            <div class="rounded-md {% if message.tags == 'error' %}bg-red-50 border-l-4 border-red-400{% else %}bg-green-50 border-l-4 border-green-400{% endif %} p-4 mb-4">
+                                <div class="flex">
+                                    <div class="ml-3">
+                                        <p class="text-sm {% if message.tags == 'error' %}text-red-700{% else %}text-green-700{% endif %}">{{ message }}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+
+                <!-- Header -->
+                <div class="md:flex md:items-center md:justify-between mb-6">
+                    <h2 class="text-2xl font-bold leading-7 text-gray-900">{{ title }}</h2>
+                    <a href="{% url 'instructors:list' %}" class="text-sm text-indigo-600 hover:text-indigo-500">← 목록으로</a>
+                </div>
+
+                <!-- Form -->
+                <div class="bg-white shadow sm:rounded-lg">
+                    <form method="POST" class="space-y-6 px-4 py-6 sm:p-8">
+                        {% csrf_token %}
+
+                        {% if form.non_field_errors %}
+                            <div class="rounded-md bg-red-50 p-4">
+                                <div class="text-sm text-red-700">
+                                    {{ form.non_field_errors }}
+                                </div>
+                            </div>
+                        {% endif %}
+
+                        <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
+                            <!-- Username -->
+                            <div class="sm:col-span-2">
+                                <label for="id_username" class="block text-sm font-medium text-gray-700">
+                                    {{ form.username.label }}
+                                    <span class="text-red-500">*</span>
+                                </label>
+                                {{ form.username }}
+                                {% if form.username.errors %}
+                                    <p class="mt-2 text-sm text-red-600">{{ form.username.errors.0 }}</p>
+                                {% endif %}
+                            </div>
+
+                            <!-- First Name -->
+                            <div>
+                                <label for="id_first_name" class="block text-sm font-medium text-gray-700">
+                                    {{ form.first_name.label }}
+                                </label>
+                                {{ form.first_name }}
+                                {% if form.first_name.errors %}
+                                    <p class="mt-2 text-sm text-red-600">{{ form.first_name.errors.0 }}</p>
+                                {% endif %}
+                            </div>
+
+                            <!-- Last Name -->
+                            <div>
+                                <label for="id_last_name" class="block text-sm font-medium text-gray-700">
+                                    {{ form.last_name.label }}
+                                </label>
+                                {{ form.last_name }}
+                                {% if form.last_name.errors %}
+                                    <p class="mt-2 text-sm text-red-600">{{ form.last_name.errors.0 }}</p>
+                                {% endif %}
+                            </div>
+
+                            <!-- Email -->
+                            <div class="sm:col-span-2">
+                                <label for="id_email" class="block text-sm font-medium text-gray-700">
+                                    {{ form.email.label }}
+                                </label>
+                                {{ form.email }}
+                                {% if form.email.errors %}
+                                    <p class="mt-2 text-sm text-red-600">{{ form.email.errors.0 }}</p>
+                                {% endif %}
+                            </div>
+
+                            <!-- Affiliated School -->
+                            <div class="sm:col-span-2">
+                                <label for="id_affiliated_school" class="block text-sm font-medium text-gray-700">
+                                    {{ form.affiliated_school.label }}
+                                </label>
+                                {{ form.affiliated_school }}
+                                {% if form.affiliated_school.errors %}
+                                    <p class="mt-2 text-sm text-red-600">{{ form.affiliated_school.errors.0 }}</p>
+                                {% endif %}
+                            </div>
+
+                            <!-- Password -->
+                            <div>
+                                <label for="id_password" class="block text-sm font-medium text-gray-700">
+                                    {{ form.password.label }}
+                                    {% if not instructor %}<span class="text-red-500">*</span>{% endif %}
+                                </label>
+                                {{ form.password }}
+                                {% if form.password.help_text %}
+                                    <p class="mt-1 text-sm text-gray-500">{{ form.password.help_text }}</p>
+                                {% endif %}
+                                {% if form.password.errors %}
+                                    <p class="mt-2 text-sm text-red-600">{{ form.password.errors.0 }}</p>
+                                {% endif %}
+                            </div>
+
+                            <!-- Confirm Password -->
+                            <div>
+                                <label for="id_confirm_password" class="block text-sm font-medium text-gray-700">
+                                    비밀번호 확인
+                                    {% if not instructor %}<span class="text-red-500">*</span>{% endif %}
+                                </label>
+                                {{ form.confirm_password }}
+                                {% if form.confirm_password.errors %}
+                                    <p class="mt-2 text-sm text-red-600">{{ form.confirm_password.errors.0 }}</p>
+                                {% endif %}
+                            </div>
+
+                            <!-- Training Completed -->
+                            <div class="sm:col-span-2">
+                                <div class="flex items-start">
+                                    <div class="flex h-5 items-center">
+                                        {{ form.training_completed }}
+                                    </div>
+                                    <div class="ml-3 text-sm">
+                                        <label for="id_training_completed" class="font-medium text-gray-700">
+                                            {{ form.training_completed.label }}
+                                        </label>
+                                    </div>
+                                </div>
+                                {% if form.training_completed.errors %}
+                                    <p class="mt-2 text-sm text-red-600">{{ form.training_completed.errors.0 }}</p>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Submit Buttons -->
+                        <div class="flex justify-end space-x-3 pt-6 border-t border-gray-200">
+                            <a href="{% url 'instructors:list' %}" class="rounded-md bg-white px-4 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
+                                취소
+                            </a>
+                            <button type="submit" class="rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500">
+                                {{ submit_text }}
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </main>
+    </div>
+</body>
+</html>

@@ -1,0 +1,252 @@
+<story-context id="bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>2</epicId>
+    <storyId>2.1</storyId>
+    <title>Instructor Management (Administrator)</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-04</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/stories/2-1-instructor-management-administrator.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>an administrator</asA>
+    <iWant>to create and manage instructor accounts</iWant>
+    <soThat>instructors can access the system and manage their students</soThat>
+    <tasks>
+- Task 1: Create Instructor Profile model and admin interface (AC: 2, 4, 5)
+  - Extend User model from Story 1.2 with instructor-specific fields via related model
+  - Create `instructors/models.py` with Instructor model (related to User via OneToOne)
+  - Add fields: affiliated_school (FK to School), training_completed (BooleanField)
+  - Create database migration and apply
+  - Register Instructor model in Django admin
+  - Add `__str__` method returning instructor name
+
+- Task 2: Create instructor CRUD views and forms (AC: 2, 3, 4, 7)
+  - Create `instructors/forms.py` with InstructorCreateForm and InstructorEditForm
+  - Implement instructor list view with Django QuerySet pagination
+  - Implement instructor create view with User + Instructor creation
+  - Implement instructor detail view showing profile and assigned classes
+  - Implement instructor edit view for updating profile information
+  - Add form validation to prevent duplicate usernames (check User.objects.filter)
+  - Add @admin_required decorator to all views
+
+- Task 3: Build instructor management templates (AC: 1, 6)
+  - Create `instructors/templates/instructors/list.html` with Tailwind CSS table
+  - Create `instructors/templates/instructors/create.html` with form layout
+  - Create `instructors/templates/instructors/detail.html` showing full profile
+  - Create `instructors/templates/instructors/edit.html` for profile editing
+  - Add search and filter UI elements (by school, training status)
+  - Display columns: name, school, class count, training status, last login
+  - Add action buttons: Create, Edit, View Details
+
+- Task 4: Implement search and filter functionality (AC: 3)
+  - Add search by instructor name (case-insensitive using icontains)
+  - Add filter by school (dropdown with School.objects.all())
+  - Add filter by training status (completed/incomplete radio buttons)
+  - Implement query logic in list view using Q objects
+  - Preserve search/filter parameters in pagination links
+
+- Task 5: Add URL routing and navigation (AC: 1)
+  - Create `instructors/urls.py` with app namespace 'instructors'
+  - Add URL patterns: list, create, detail, edit
+  - Include instructors.urls in neulbom/urls.py
+  - Add "Instructors" navigation link in admin dashboard
+
+- Task 6: Testing (All ACs)
+  - Write model tests for Instructor model creation and relationships
+  - Write view tests for list, create, edit views with @admin_required
+  - Test form validation (duplicate username prevention)
+  - Test search and filter functionality
+  - Test that non-admin users cannot access instructor management
+  - Run full test suite and verify no regressions
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+1. Administrator dashboard includes "Instructors" section
+2. Admin can create new instructor accounts with username, password, affiliated school, and class assignment
+3. Admin can view list of all instructors with search and filter capabilities
+4. Admin can edit instructor profile information (school, class, training status)
+5. Admin can manually mark instructor training completion status
+6. Instructor list displays: name, school, class count, training status, last login
+7. Form validation prevents duplicate usernames
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/PRD.md</path>
+        <title>Product Requirements Document</title>
+        <section>Functional Requirements</section>
+        <snippet>FR003: Administrators can create, view, search, and manage instructor accounts. FR004: System maintains instructor profile information (school, class assignments, training status). FR005: Administrators can manually record instructor training completion status.</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Decision Architecture</title>
+        <section>Project Structure</section>
+        <snippet>Multi-app structure with instructors/ app containing models.py, views.py, forms.py, urls.py, templates/. Django Templates + Tailwind CSS for frontend. MySQL 8.0 with mysqlclient driver.</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Decision Architecture</title>
+        <section>Data Architecture - Core Data Models</section>
+        <snippet>User model with role field (admin/instructor/student). Instructor model with OneToOne relationship to User, ForeignKey to School, training_completed BooleanField. Class model with ForeignKey to User (instructor) and School.</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Decision Architecture</title>
+        <section>Implementation Patterns - Naming Conventions</section>
+        <snippet>URL format: kebab-case (e.g., /instructors/create/). URL names: app_namespace:action (e.g., instructors:list). Python: snake_case for functions/methods, PascalCase for classes. Templates: snake_case.html in {app}/templates/{app}/.</snippet>
+      </doc>
+      <doc>
+        <path>docs/epics.md</path>
+        <title>Epic Breakdown</title>
+        <section>Story 2.1: Instructor Management (Administrator)</section>
+        <snippet>Acceptance Criteria include instructor CRUD operations, search/filter by school and training status, duplicate username validation, display of instructor metrics (name, school, class count, training status, last login).</snippet>
+      </doc>
+    </docs>
+    <code>
+      <artifact>
+        <path>authentication/models.py</path>
+        <kind>model</kind>
+        <symbol>User</symbol>
+        <lines>1-42</lines>
+        <reason>CustomUser model with role field (admin/instructor/student), affiliated_school FK, and training_completed field - base model for instructor accounts</reason>
+      </artifact>
+      <artifact>
+        <path>authentication/decorators.py</path>
+        <kind>decorator</kind>
+        <symbol>admin_required</symbol>
+        <lines>51-59</lines>
+        <reason>Permission decorator to restrict instructor management views to admin users only</reason>
+      </artifact>
+      <artifact>
+        <path>authentication/decorators.py</path>
+        <kind>decorator</kind>
+        <symbol>role_required</symbol>
+        <lines>15-47</lines>
+        <reason>Base role-based access control decorator - foundation for admin_required</reason>
+      </artifact>
+      <artifact>
+        <path>students/models.py</path>
+        <kind>model</kind>
+        <symbol>School</symbol>
+        <lines>5-57</lines>
+        <reason>School model for affiliated_school FK relationship in Instructor model</reason>
+      </artifact>
+      <artifact>
+        <path>students/models.py</path>
+        <kind>model</kind>
+        <symbol>Class</symbol>
+        <lines>60-128</lines>
+        <reason>Class model with instructor FK - used to calculate class_count property for instructor profiles</reason>
+      </artifact>
+      <artifact>
+        <path>neulbom/settings.py</path>
+        <kind>config</kind>
+        <symbol>INSTALLED_APPS</symbol>
+        <lines>53-65</lines>
+        <reason>Installed apps configuration - instructors app already registered</reason>
+      </artifact>
+      <artifact>
+        <path>neulbom/settings.py</path>
+        <kind>config</kind>
+        <symbol>AUTH_USER_MODEL</symbol>
+        <lines>46</lines>
+        <reason>Custom user model setting - points to authentication.User</reason>
+      </artifact>
+      <artifact>
+        <path>neulbom/settings.py</path>
+        <kind>config</kind>
+        <symbol>TEMPLATES</symbol>
+        <lines>80-94</lines>
+        <reason>Template configuration with BASE_DIR/templates and APP_DIRS for instructors templates</reason>
+      </artifact>
+    </code>
+    <dependencies>
+      <python>
+        <package name="Django" version="4.2.16"/>
+        <package name="mysqlclient" version=">=2.2.0"/>
+        <package name="python-decouple" version=">=3.8"/>
+      </python>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+- Multi-app Django structure: Create new `instructors` app with standard Django app layout (models.py, views.py, forms.py, urls.py, admin.py, tests.py, templates/)
+- Use existing User model from authentication app - DO NOT recreate user management
+- Create Instructor model with OneToOneField to User (role='instructor')
+- ForeignKey to students.School for affiliated_school field
+- All views MUST use @admin_required decorator from authentication.decorators
+- Templates must use Tailwind CSS CDN (no local CSS compilation needed)
+- Korean language for all UI elements (labels, buttons, messages)
+- Form validation: Check User.objects.filter(username=...).exists() to prevent duplicates
+- Use Django's select_related() and annotate() for efficient queries (instructor list with class counts)
+- Follow URL naming convention: app_namespace:action (e.g., instructors:list, instructors:create)
+- Template location: instructors/templates/instructors/*.html
+- Database: Use existing MySQL/SQLite configuration from settings.py
+- Testing: Django TestCase with Client, minimum coverage for models, views, forms
+- Logging: Use Python logging module with existing configuration from settings.py
+- Error messages in Korean, log messages in English
+  </constraints>
+
+  <interfaces>
+    <interface>
+      <name>User Model</name>
+      <kind>Django Model</kind>
+      <signature>authentication.User (role, affiliated_school, training_completed, username, password, first_name, last_name, last_login)</signature>
+      <path>authentication/models.py:5-42</path>
+    </interface>
+    <interface>
+      <name>School Model</name>
+      <kind>Django Model</kind>
+      <signature>students.School (name, logo, address, contact_phone, contact_email)</signature>
+      <path>students/models.py:5-57</path>
+    </interface>
+    <interface>
+      <name>Class Model</name>
+      <kind>Django Model</kind>
+      <signature>students.Class (name, school, instructor, academic_year, semester)</signature>
+      <path>students/models.py:60-128</path>
+    </interface>
+    <interface>
+      <name>admin_required Decorator</name>
+      <kind>Function Decorator</kind>
+      <signature>@admin_required - restricts view to admin role only</signature>
+      <path>authentication/decorators.py:51-59</path>
+    </interface>
+    <interface>
+      <name>Instructor Model (to create)</name>
+      <kind>Django Model</kind>
+      <signature>instructors.Instructor (user: OneToOneField, affiliated_school: ForeignKey, training_completed: BooleanField)</signature>
+      <path>instructors/models.py (new file)</path>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+Django TestCase framework with Client for view testing. Test models for creation, relationships, and properties. Test views for permission enforcement (@admin_required), CRUD operations, and search/filter functionality. Test forms for validation (duplicate username prevention). Use select_related/prefetch_related in test fixtures for efficient queries. Follow existing test patterns from authentication/tests.py and neulbom/tests/test_landing.py (73 tests passing across project).
+    </standards>
+    <locations>
+instructors/tests.py - main test file for Instructor app
+    </locations>
+    <ideas>
+- AC1: Test that instructor list view displays "Instructors" section header
+- AC2: Test instructor creation creates both User (role='instructor') and Instructor profile
+- AC2: Test affiliated_school assignment during creation
+- AC3: Test instructor list view returns all instructors
+- AC3: Test search by instructor name (username, first_name, last_name)
+- AC3: Test filter by school returns correct subset
+- AC3: Test filter by training status (completed/incomplete)
+- AC4: Test edit view updates instructor profile fields
+- AC5: Test training_completed field can be toggled
+- AC6: Test instructor list displays all required columns (name, school, class count, training status, last login)
+- AC6: Test class_count annotation returns correct count
+- AC7: Test duplicate username raises validation error in form
+- AC7: Test unique username passes validation
+- Permission: Test @admin_required blocks non-admin users
+- Permission: Test admin users can access all instructor views
+    </ideas>
+  </tests>
+</story-context>

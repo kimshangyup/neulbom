@@ -1,0 +1,246 @@
+<story-context id="bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>3</epicId>
+    <storyId>2</storyId>
+    <title>Administrator Dashboard - Instructor Activity</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-04</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/stories/3-2-administrator-dashboard-instructor-activity.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>administrator</asA>
+    <iWant>see instructor-level operational status</iWant>
+    <soThat>I can identify which instructors need support</soThat>
+    <tasks>
+      - Task 1: Extend DashboardMetrics service for instructor data (AC: 1, 2)
+      - Task 2: Update admin dashboard template (AC: 1, 2, 3, 4, 6)
+      - Task 3: Implement instructor detail view (AC: 5)
+      - Task 4: Implement data refresh mechanism (AC: 7)
+      - Task 5: Add search and filter functionality (AC: 3)
+      - Task 6: Implement sortable columns (AC: 4)
+      - Task 7: Write comprehensive tests
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    1. Dashboard includes "Instructor Activity" section
+    2. Table displays: instructor name, school, class count, student count, last login, spaces created
+    3. Search and filter by school, activity status (active/inactive)
+    4. Sortable columns for all metrics
+    5. Click on instructor row navigates to detailed instructor view
+    6. Inactive instructors (no login > 30 days) highlighted
+    7. Data refreshes every 5 minutes automatically
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc path="docs/PRD.md" title="Product Requirements Document">
+        <section name="Functional Requirements">
+          - FR015: System shall display instructor-level operational status and activity summaries
+          - NFR001: System shall support 500 concurrent users with page load times under 3 seconds
+        </section>
+      </doc>
+
+      <doc path="docs/architecture.md" title="Decision Architecture">
+        <section name="Epic to Architecture Mapping">
+          Epic 3 uses dashboard app with metrics aggregation. Story 3.2 extends Story 3.1's infrastructure.
+        </section>
+        <section name="Performance Considerations">
+          - Query optimization with select_related() and annotate()
+          - 5-minute caching for dashboard data
+          - Database indexes on foreign keys
+        </section>
+      </doc>
+
+      <doc path="docs/epics.md" title="Epic Breakdown">
+        <section name="Story 3.2: Administrator Dashboard - Instructor Activity">
+          All 7 acceptance criteria with prerequisite Story 3.1 (dashboard foundation)
+        </section>
+      </doc>
+
+      <doc path="docs/stories/3-1-administrator-dashboard-core-metrics.md" title="Story 3.1 (Completed)">
+        <section name="Implementation">
+          - Created dashboard app with DashboardMetrics service
+          - Implemented admin_dashboard view with @admin_required
+          - Template at templates/dashboard/admin_dashboard.html
+          - 5-minute caching pattern established
+          - Real-time updates via AJAX (30-second polling)
+          - Comprehensive test suite (22 tests)
+        </section>
+      </doc>
+    </docs>
+
+    <code>
+      <artifact path="dashboard/metrics.py" kind="service" symbol="DashboardMetrics">
+        <lines>Full file</lines>
+        <reason>Extend this class with get_instructor_activity() method for instructor data aggregation</reason>
+      </artifact>
+
+      <artifact path="dashboard/views.py" kind="view" symbol="admin_dashboard">
+        <lines>Full file</lines>
+        <reason>Add instructor_detail view here. Reference existing patterns for @admin_required and context handling</reason>
+      </artifact>
+
+      <artifact path="templates/dashboard/admin_dashboard.html" kind="template" symbol="(dashboard template)">
+        <lines>Full file</lines>
+        <reason>Add Instructor Activity section to this template. Reference existing metric cards and table patterns</reason>
+      </artifact>
+
+      <artifact path="dashboard/urls.py" kind="urls" symbol="urlpatterns">
+        <lines>Full file</lines>
+        <reason>Add instructor detail URL pattern following existing naming conventions</reason>
+      </artifact>
+
+      <artifact path="authentication/models.py" kind="model" symbol="User">
+        <lines>Full file</lines>
+        <reason>Query instructors (role='instructor'). Has last_login field for activity tracking</reason>
+      </artifact>
+
+      <artifact path="students/models.py" kind="model" symbol="Class, Student, School">
+        <lines>Full file</lines>
+        <reason>Query classes (instructor FK), students (class FK), schools. Need for aggregation counts</reason>
+      </artifact>
+
+      <artifact path="dashboard/test_admin_dashboard.py" kind="test" symbol="(test patterns)">
+        <lines>Full file</lines>
+        <reason>Reference test structure for Story 3.2 tests. Follow same Django TestCase patterns</reason>
+      </artifact>
+    </code>
+
+    <dependencies>
+      <python>
+        <package name="Django" version="4.2.16">Core framework - already installed</package>
+        <package name="mysqlclient" version=">=2.2.0">Database driver - already installed</package>
+      </python>
+
+      <frontend>
+        <framework name="Tailwind CSS">Already configured in Story 3.1</framework>
+        <library name="Vanilla JavaScript">For sorting and filtering - no additional dependencies</library>
+      </frontend>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    - MUST extend existing dashboard/metrics.py (DO NOT create new file)
+    - MUST add section to existing templates/dashboard/admin_dashboard.html (DO NOT create new dashboard template)
+    - MUST use @admin_required decorator from authentication.mixins
+    - MUST follow 5-minute caching pattern from Story 3.1
+    - MUST use Django ORM with select_related() and annotate() for efficient queries
+    - MUST use Tailwind CSS (consistent with Story 3.1)
+    - MUST ensure WCAG 2.1 AA accessibility (color contrast for inactive highlighting)
+    - MUST test query performance with 20+ instructors
+    - DO NOT use external JavaScript libraries (use vanilla JS only)
+    - DO NOT create separate dashboard page (extend existing admin dashboard)
+  </constraints>
+
+  <interfaces>
+    <interface name="DashboardMetrics.get_instructor_activity" kind="service-method">
+      <signature>
+@staticmethod
+def get_instructor_activity():
+    """
+    Get instructor activity data with aggregations.
+
+    Returns:
+        list: [{
+            'id': int,
+            'username': str,
+            'full_name': str,
+            'school_name': str,
+            'last_login': datetime,
+            'class_count': int,
+            'student_count': int,
+            'spaces_created': int,
+            'is_inactive': bool
+        }]
+    """
+    thirty_days_ago = timezone.now() - timedelta(days=30)
+
+    instructors = User.objects.filter(role='instructor').select_related(
+        'affiliated_school'
+    ).annotate(
+        class_count=Count('class_set', distinct=True),
+        student_count=Count('class_set__students', distinct=True),
+        spaces_created=Count(
+            'class_set__students',
+            filter=~Q(class_set__students__zep_space_url=''),
+            distinct=True
+        )
+    )
+    # Process and return structured data
+      </signature>
+      <path>dashboard/metrics.py (MODIFY - add this method)</path>
+    </interface>
+
+    <interface name="Instructor Detail View" kind="django-view">
+      <signature>
+@admin_required
+def instructor_detail(request, instructor_id):
+    """Detailed view of individual instructor activity"""
+    instructor = get_object_or_404(User, id=instructor_id, role='instructor')
+    # Get detailed stats
+    context = {
+        'instructor': instructor,
+        'classes': ...,
+        'statistics': ...
+    }
+    return render(request, 'dashboard/instructor_detail.html', context)
+      </signature>
+      <path>dashboard/views.py (ADD new view)</path>
+    </interface>
+
+    <interface name="Instructor Detail URL" kind="url-pattern">
+      <signature>
+path('admin/instructor/&lt;int:instructor_id&gt;/', views.instructor_detail, name='instructor_detail')
+      </signature>
+      <path>dashboard/urls.py (ADD new URL)</path>
+    </interface>
+
+    <interface name="Updated Metrics API" kind="rest-endpoint">
+      <signature>
+GET /dashboard/api/metrics/
+Response: JSON including instructor_activity array
+{
+  "total_schools": int,
+  "total_instructors": int,
+  "total_students": int,
+  "active_spaces": int,
+  "visitor_stats": {...},
+  "instructor_activity": [...]  # NEW
+}
+      </signature>
+      <path>dashboard/views.py (MODIFY metrics_api view)</path>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+      Use Django TestCase framework. Create new test file: dashboard/test_instructor_activity.py
+      Follow patterns from dashboard/test_admin_dashboard.py (Story 3.1).
+      Test both functionality and query performance.
+    </standards>
+
+    <locations>
+      - dashboard/test_instructor_activity.py (NEW - primary test file for Story 3.2)
+      - Test with fixtures: create 20+ instructors with varying activity levels
+    </locations>
+
+    <ideas>
+      - AC1: Test instructor activity section renders on dashboard
+      - AC2: Test table displays correct data (name, school, counts, last login)
+      - AC3: Test search by name filters correctly
+      - AC3: Test school filter works
+      - AC3: Test activity status filter (active/inactive)
+      - AC4: Test column sorting for all columns
+      - AC5: Test clicking row navigates to detail view
+      - AC5: Test instructor detail view renders correctly
+      - AC6: Test inactive instructor highlighting (>30 days)
+      - AC7: Test auto-refresh every 5 minutes (300s interval)
+      - Test query performance with 20+ instructors (&lt; 1 second)
+      - Test get_instructor_activity() returns correct aggregations
+      - Test aggregation accuracy (class_count, student_count, spaces_created)
+    </ideas>
+  </tests>
+</story-context>

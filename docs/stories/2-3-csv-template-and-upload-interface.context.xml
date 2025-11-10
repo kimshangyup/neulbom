@@ -1,0 +1,292 @@
+<story-context id="bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>2</epicId>
+    <storyId>2.3</storyId>
+    <title>CSV Template and Upload Interface</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-04</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/stories/2-3-csv-template-and-upload-interface.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>an instructor</asA>
+    <iWant>to download a CSV template and upload student rosters</iWant>
+    <soThat>I can efficiently register multiple students at once</soThat>
+    <tasks>
+- Task 1: Create instructor dashboard with Student Management section (AC: 1)
+  - Create instructor dashboard view at `/instructors/dashboard/`
+  - Add "Student Management" section to dashboard with navigation
+  - Restrict access to instructors only using `@role_required('instructor')` decorator
+  - Create dashboard template `instructors/dashboard.html` using Tailwind CSS
+  - Add dashboard URL pattern to `instructors/urls.py`
+  - Test instructor can access dashboard, other roles cannot
+
+- Task 2: Implement CSV template download functionality (AC: 2)
+  - Create view `download_csv_template` in `students/views.py`
+  - Generate CSV with headers: student_name, student_id, grade, notes
+  - Set proper HTTP response headers for CSV download (`Content-Disposition: attachment`)
+  - Add example row in template to guide instructors
+  - Add URL pattern `/students/csv-template/download/`
+  - Create "Download Template" button in instructor dashboard
+  - Test CSV downloads with correct format and headers
+
+- Task 3: Create file upload interface with drag-and-drop (AC: 3)
+  - Create upload view `upload_student_csv` in `students/views.py`
+  - Create Django form `StudentCSVUploadForm` in `students/forms.py`
+  - Add `FileField` accepting CSV/Excel (`.csv`, `.xlsx`, `.xls`)
+  - Create upload template `students/upload_csv.html` with Tailwind CSS
+  - Implement drag-and-drop using vanilla JavaScript (no external libraries)
+  - Add file size validation (max 5MB)
+  - Display selected filename and file size before upload
+  - Add URL pattern `/students/upload-csv/`
+  - Link upload page from instructor dashboard
+
+- Task 4: Implement CSV validation with pandas (AC: 4)
+  - Create `CSVValidator` class in `students/validators.py`
+  - Use pandas to read CSV/Excel files
+  - Validate required columns exist: student_name, student_id, grade
+  - Validate data types: grade must be integer 1-6
+  - Validate student_id uniqueness within file
+  - Check student_id doesn't already exist in database
+  - Return structured error messages with row numbers for invalid data
+  - Handle file encoding issues (UTF-8, EUC-KR for Korean compatibility)
+  - Test validation with valid, invalid, and malformed files
+
+- Task 5: Create preview table with student data (AC: 5, 6)
+  - After validation, store parsed data in Django session
+  - Generate preview data including:
+    - student_name (from CSV)
+    - student_id (from CSV)
+    - grade (from CSV)
+    - generated_email (format: {student_id}@seoul.zep.internal)
+    - class_assignment (current instructor's active class)
+  - Create preview template `students/upload_preview.html`
+  - Display preview table with Tailwind CSS styling
+  - Show summary: "X students will be created"
+  - Handle case where instructor has no active class (show error)
+
+- Task 6: Add confirmation and cancellation actions (AC: 7)
+  - Add "Confirm" button to preview page
+  - Add "Cancel" button to return to upload page
+  - On cancel, clear session data and redirect to upload page
+  - On confirm, pass data to student creation workflow (Story 2.5)
+  - Add CSRF protection to all forms
+  - Display success/error messages using Django messages framework
+  - Test full workflow: download template → upload → preview → confirm/cancel
+
+- Task 7: Write comprehensive tests
+  - Test CSV template download (correct headers and format)
+  - Test file upload with valid CSV
+  - Test file upload with valid Excel (.xlsx)
+  - Test validation rejects invalid file formats (.txt, .pdf)
+  - Test validation detects missing required columns
+  - Test validation detects invalid grade values
+  - Test validation detects duplicate student_ids
+  - Test drag-and-drop JavaScript interface
+  - Test instructor-only access to upload pages
+  - Test preview displays correct generated emails
+  - Run full test suite and ensure no regressions
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+1. Instructor dashboard includes "Student Management" section
+2. "Download Template" button generates CSV with required fields: student_name, student_id, grade, notes
+3. File upload interface accepts CSV/Excel files with drag-and-drop support
+4. System validates file format and displays clear error messages for invalid files
+5. After validation, system displays preview table of students to be created
+6. Preview shows: student name, generated email, class assignment
+7. Instructor can review and confirm or cancel the upload
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/PRD.md</path>
+        <title>Product Requirements Document</title>
+        <section>Functional Requirements</section>
+        <snippet>FR006: Instructors shall upload student rosters via CSV/Excel format. FR007: System generates student accounts with system-generated email addresses upon roster upload. NFR002: System processes bulk uploads of 100 students within 30 seconds.</snippet>
+      </doc>
+      <doc>
+        <path>docs/PRD.md</path>
+        <title>Product Requirements Document</title>
+        <section>User Journey 1 - Instructor Bulk Student Registration</section>
+        <snippet>Steps 3-7: Downloads CSV template → Fills template → Uploads file → System validates and displays preview → Confirms creation. Success Criteria: Complete process in under 10 minutes vs. 2+ hours manual.</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Decision Architecture</title>
+        <section>Technical Decisions</section>
+        <snippet>CSV Processing: pandas library for unified CSV/Excel handling and data validation. Frontend: Django Templates + Tailwind CSS for server-side rendering. Session Management: Database sessions (no Redis dependency).</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Decision Architecture</title>
+        <section>Project Structure</section>
+        <snippet>students/ app contains views.py for CSV upload, forms.py for upload form, validators.py (NEW) for CSV validation, and templates/students/ for upload and preview HTML.</snippet>
+      </doc>
+      <doc>
+        <path>docs/epics.md</path>
+        <title>Epic Breakdown</title>
+        <section>Story 2.3</section>
+        <snippet>CSV Template with fields: student_name, student_id, grade, notes. Upload accepts CSV/Excel with drag-and-drop. Validation displays errors. Preview shows generated email and class assignment.</snippet>
+      </doc>
+    </docs>
+    <code>
+      <artifact>
+        <path>students/models.py</path>
+        <kind>model</kind>
+        <symbol>Student</symbol>
+        <lines>130-221</lines>
+        <reason>Student model with student_id (unique), generated_email (unique), and class_assignment FK. Use to validate uploaded student_ids don't already exist in database.</reason>
+      </artifact>
+      <artifact>
+        <path>students/models.py</path>
+        <kind>model</kind>
+        <symbol>Class</symbol>
+        <lines>60-135</lines>
+        <reason>Class model with instructor FK. Use Class.objects.filter(instructor=request.user) to get instructor's active classes for assigning students in preview.</reason>
+      </artifact>
+      <artifact>
+        <path>authentication/models.py</path>
+        <kind>model</kind>
+        <symbol>User</symbol>
+        <lines>5-42</lines>
+        <reason>Custom User model with role field. Use request.user to identify current instructor and filter their classes.</reason>
+      </artifact>
+      <artifact>
+        <path>authentication/decorators.py</path>
+        <kind>decorator</kind>
+        <symbol>role_required</symbol>
+        <lines>unknown</lines>
+        <reason>Access control decorator. Use @role_required('instructor') to restrict dashboard and upload views to instructors only.</reason>
+      </artifact>
+      <artifact>
+        <path>instructors/views.py</path>
+        <kind>view</kind>
+        <symbol>instructor_list</symbol>
+        <lines>unknown</lines>
+        <reason>Existing instructor views demonstrate Django view patterns with role_required decorator, form handling, and Tailwind CSS templates. Follow same patterns for student upload views.</reason>
+      </artifact>
+      <artifact>
+        <path>instructors/templates/instructors/list.html</path>
+        <kind>template</kind>
+        <symbol>N/A</symbol>
+        <lines>unknown</lines>
+        <reason>Existing template demonstrates Tailwind CSS patterns, table layouts, search/filter UI. Use as reference for upload and preview templates.</reason>
+      </artifact>
+    </code>
+    <dependencies>
+      <python>
+        <package name="Django" version="4.2.16"/>
+        <package name="mysqlclient" version=">=2.2.0"/>
+        <package name="pandas" version=">=2.0.0"/>
+        <package name="python-decouple" version=">=3.8"/>
+      </python>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+- **CRITICAL**: Use pandas for all CSV/Excel file processing (architecture decision)
+- **CRITICAL**: generated_email format MUST be `{student_id}@seoul.zep.internal` (matches Student model validation)
+- **CRITICAL**: Use database sessions for preview data storage (no Redis available)
+- Frontend: Django Templates + Tailwind CSS only (no React, Vue, or external JS libraries except vanilla JS for drag-and-drop)
+- Access Control: Use `@role_required('instructor')` decorator on all instructor-only views
+- File Upload: Standard Django FileField, max 5MB file size
+- File Formats: Accept `.csv`, `.xlsx`, `.xls` only
+- CSV Encoding: Support UTF-8 and EUC-KR for Korean characters
+- Validation: Check student_id uniqueness in both file AND database before preview
+- Session Data: Clear session data on cancel or after successful creation
+- Error Messages: Display specific errors with row numbers for invalid CSV data
+- Preview: Must show generated_email and class_assignment before creation
+- Confirmation Flow: Require explicit "Confirm" action before creating students (Story 2.5)
+- Testing: Follow existing patterns in students/tests.py (Django TestCase, 128 tests passing)
+- Logging: Use Python logging for all file processing operations
+- CSRF Protection: All forms must include {% csrf_token %}
+- URL Patterns: `/students/csv-template/download/`, `/students/upload-csv/`, `/students/upload-preview/`
+- No migrations needed: All models already exist (verified in Story 2.2)
+</constraints>
+
+  <interfaces>
+    <interface>
+      <name>CSV Template Download</name>
+      <kind>Django View</kind>
+      <signature>download_csv_template(request) -> HttpResponse with CSV attachment</signature>
+      <path>students/views.py</path>
+    </interface>
+    <interface>
+      <name>CSV Upload View</name>
+      <kind>Django View</kind>
+      <signature>upload_student_csv(request) -> render upload template or redirect to preview</signature>
+      <path>students/views.py</path>
+    </interface>
+    <interface>
+      <name>CSV Preview View</name>
+      <kind>Django View</kind>
+      <signature>upload_preview(request) -> render preview template with session data</signature>
+      <path>students/views.py</path>
+    </interface>
+    <interface>
+      <name>StudentCSVUploadForm</name>
+      <kind>Django Form</kind>
+      <signature>StudentCSVUploadForm(forms.Form) with csv_file FileField</signature>
+      <path>students/forms.py</path>
+    </interface>
+    <interface>
+      <name>CSVValidator</name>
+      <kind>Python Class</kind>
+      <signature>CSVValidator.validate(file) -> dict with 'valid': bool, 'data': list, 'errors': list</signature>
+      <path>students/validators.py</path>
+    </interface>
+    <interface>
+      <name>Student Model Query</name>
+      <kind>Django ORM</kind>
+      <signature>Student.objects.filter(student_id__in=csv_student_ids).exists()</signature>
+      <path>students/models.py</path>
+    </interface>
+    <interface>
+      <name>Class Query for Instructor</name>
+      <kind>Django ORM</kind>
+      <signature>Class.objects.filter(instructor=request.user, academic_year=current_year).first()</signature>
+      <path>students/models.py</path>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+Django TestCase framework with 128 tests currently passing. Create new test file students/test_csv_upload.py or add to existing students/tests.py. Test file uploads, CSV validation, preview display, access control, and session handling. Use TestCase.setUp() for fixture creation (create test User with instructor role, Class, sample CSV files). Test both valid and invalid scenarios. Use Django test client for view tests. Mock file uploads with SimpleUploadedFile. Verify error messages display correctly. Test drag-and-drop JavaScript with integration tests if possible.
+    </standards>
+    <locations>
+students/tests.py - main test file for students app
+students/test_csv_upload.py - could create separate file for CSV upload tests
+    </locations>
+    <ideas>
+- AC1: Test instructor dashboard loads with "Student Management" section
+- AC1: Test non-instructor cannot access dashboard (403 Forbidden)
+- AC2: Test CSV template download returns correct headers (student_name, student_id, grade, notes)
+- AC2: Test CSV template has example row
+- AC2: Test CSV template download sets correct Content-Disposition header
+- AC3: Test upload view accepts CSV file (.csv extension)
+- AC3: Test upload view accepts Excel file (.xlsx extension)
+- AC3: Test upload view rejects non-CSV/Excel files (.txt, .pdf)
+- AC3: Test file size validation rejects files over 5MB
+- AC4: Test validation detects missing required column (student_name missing)
+- AC4: Test validation detects invalid grade value (grade = 0, 7, "abc")
+- AC4: Test validation detects duplicate student_id within file
+- AC4: Test validation detects student_id already exists in database
+- AC4: Test validation handles UTF-8 encoded CSV
+- AC4: Test validation handles EUC-KR encoded CSV (Korean characters)
+- AC5: Test preview displays parsed student data from CSV
+- AC5: Test preview stores data in session correctly
+- AC5: Test preview redirects to upload if no session data
+- AC6: Test preview displays generated email (format: {student_id}@seoul.zep.internal)
+- AC6: Test preview displays class assignment from instructor's active class
+- AC6: Test preview shows error if instructor has no active class
+- AC7: Test confirm button flow (stub for Story 2.5 integration)
+- AC7: Test cancel button clears session data and redirects to upload
+- AC7: Test CSRF protection on all forms
+- Integration: Test full workflow from template download → upload → preview → cancel
+    </ideas>
+  </tests>
+</story-context>

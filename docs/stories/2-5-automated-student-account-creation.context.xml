@@ -1,0 +1,251 @@
+<story-context id="bmad/bmm/workflows/4-implementation/story-context/2-5" v="1.0">
+  <metadata>
+    <epicId>2</epicId>
+    <storyId>5</storyId>
+    <title>Automated Student Account Creation</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-04</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/stories/2-5-automated-student-account-creation.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>instructor</asA>
+    <iWant>student accounts automatically created from my CSV upload</iWant>
+    <soThat>I don't have to manually create accounts one by one</soThat>
+    <tasks>
+      - Task 1: Update student creation service to handle bulk operations (AC: 1, 2, 3, 4, 6)
+      - Task 2: Implement credentials display and download (AC: 7)
+      - Task 3: Optimize bulk creation performance (AC: 5)
+      - Task 4: Integration with CSV upload workflow (AC: 1-7)
+      - Task 5: Write comprehensive tests
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <criterion id="AC1">Upon confirmation, system generates email addresses in format: {student_id}@seoul.zep.internal</criterion>
+    <criterion id="AC2">System creates User accounts with student role for each student in CSV</criterion>
+    <criterion id="AC3">System generates secure random passwords for each student account</criterion>
+    <criterion id="AC4">Student records created in database linked to the instructor's class</criterion>
+    <criterion id="AC5">Bulk creation completes within 30 seconds for 100 students</criterion>
+    <criterion id="AC6">Transaction rollback occurs if any student creation fails (atomic operation)</criterion>
+    <criterion id="AC7">Success confirmation displays list of created accounts with credentials</criterion>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/PRD.md</path>
+        <title>Product Requirements Document</title>
+        <section>Functional Requirements</section>
+        <snippet>FR007: System shall automatically generate student accounts with system-generated email addresses upon roster upload</snippet>
+      </doc>
+      <doc>
+        <path>docs/PRD.md</path>
+        <title>Product Requirements Document</title>
+        <section>Non-Functional Requirements</section>
+        <snippet>NFR002: System shall process bulk uploads of 100 students within 30 seconds</snippet>
+      </doc>
+      <doc>
+        <path>docs/epics.md</path>
+        <title>Epic Breakdown</title>
+        <section>Story 2.5: Automated Student Account Creation</section>
+        <snippet>Prerequisites: Story 2.3 (requires CSV upload interface). Email format: {student_id}@seoul.zep.internal. Transaction rollback on failure (atomic operation).</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Decision Architecture</title>
+        <section>Decision Summary</section>
+        <snippet>Django 4.2 LTS with built-in auth, MySQL 8.0, mysqlclient driver. Transaction management using Django @transaction.atomic decorator. Password hashing via Django PBKDF2-SHA256.</snippet>
+      </doc>
+      <doc>
+        <path>docs/stories/2-3-csv-template-and-upload-interface.md</path>
+        <title>Previous Story - CSV Template and Upload Interface</title>
+        <section>Completion Notes</section>
+        <snippet>Service layer already exists in students/services.py with create_student_accounts() function. Credentials display views and templates already implemented. Integration with CSV upload workflow complete.</snippet>
+      </doc>
+    </docs>
+
+    <code>
+      <artifact>
+        <path>students/services.py</path>
+        <kind>service</kind>
+        <symbol>create_student_accounts</symbol>
+        <lines>73-181</lines>
+        <reason>Core function for student account creation - already implements email/password generation, User and Student creation. Needs @transaction.atomic decorator added.</reason>
+      </artifact>
+      <artifact>
+        <path>students/services.py</path>
+        <kind>service</kind>
+        <symbol>generate_email</symbol>
+        <lines>50-51</lines>
+        <reason>Generates email in required format: {student_id}@seoul.zep.internal</reason>
+      </artifact>
+      <artifact>
+        <path>students/services.py</path>
+        <kind>service</kind>
+        <symbol>generate_password</symbol>
+        <lines>54-65</lines>
+        <reason>Generates secure random passwords using Django's get_random_string()</reason>
+      </artifact>
+      <artifact>
+        <path>students/services.py</path>
+        <kind>service</kind>
+        <symbol>get_student_credentials</symbol>
+        <lines>184-206</lines>
+        <reason>Extracts credentials from creation results for display</reason>
+      </artifact>
+      <artifact>
+        <path>students/services.py</path>
+        <kind>service</kind>
+        <symbol>export_credentials_csv</symbol>
+        <lines>209-238</lines>
+        <reason>Exports credentials to CSV with UTF-8 BOM for Excel compatibility</reason>
+      </artifact>
+      <artifact>
+        <path>students/views.py</path>
+        <kind>view</kind>
+        <symbol>student_upload</symbol>
+        <lines>54-173</lines>
+        <reason>CSV upload view with confirm branch (lines 88-164) that calls create_student_accounts() and redirects to credentials page</reason>
+      </artifact>
+      <artifact>
+        <path>students/views.py</path>
+        <kind>view</kind>
+        <symbol>student_credentials</symbol>
+        <lines>177-194</lines>
+        <reason>Displays created student credentials from session</reason>
+      </artifact>
+      <artifact>
+        <path>students/views.py</path>
+        <kind>view</kind>
+        <symbol>download_credentials</symbol>
+        <lines>198-219</lines>
+        <reason>Downloads credentials as CSV file with UTF-8 BOM</reason>
+      </artifact>
+      <artifact>
+        <path>students/models.py</path>
+        <kind>model</kind>
+        <symbol>Student</symbol>
+        <lines>130-221</lines>
+        <reason>Student model with fields: user (FK), student_id, name, grade, class_assignment (FK), generated_email</reason>
+      </artifact>
+      <artifact>
+        <path>students/models.py</path>
+        <kind>model</kind>
+        <symbol>Class</symbol>
+        <lines>60-135</lines>
+        <reason>Class model for linking students to instructor's class</reason>
+      </artifact>
+      <artifact>
+        <path>authentication/models.py</path>
+        <kind>model</kind>
+        <symbol>User</symbol>
+        <lines>1-100</lines>
+        <reason>Custom User model with role field for student accounts</reason>
+      </artifact>
+      <artifact>
+        <path>students/templates/students/student_credentials.html</path>
+        <kind>template</kind>
+        <symbol>student_credentials</symbol>
+        <lines>1-78</lines>
+        <reason>Template displaying created student credentials with download button</reason>
+      </artifact>
+      <artifact>
+        <path>students/test_csv_upload.py</path>
+        <kind>test</kind>
+        <symbol>test_confirm_creates_students</symbol>
+        <lines>1-500</lines>
+        <reason>Existing test for student creation via CSV upload workflow - provides testing patterns to follow</reason>
+      </artifact>
+    </code>
+
+    <dependencies>
+      <python>
+        <package name="Django" version="4.2" />
+        <package name="mysqlclient" version="latest" />
+        <package name="pandas" version="2.3.3" />
+        <package name="openpyxl" version="3.1.5" />
+      </python>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint>Use Django's @transaction.atomic decorator to ensure all-or-nothing student creation</constraint>
+    <constraint>Email format must be exactly: {student_id}@seoul.zep.internal (already implemented in generate_email)</constraint>
+    <constraint>Passwords must be generated using Django's get_random_string() for security (already implemented)</constraint>
+    <constraint>User accounts must have role='student' when created</constraint>
+    <constraint>Bulk creation must complete within 30 seconds for 100 students (NFR002)</constraint>
+    <constraint>DO NOT recreate existing services - modify students/services.py:create_student_accounts() function</constraint>
+    <constraint>Follow Django TestCase patterns established in students/test_csv_upload.py</constraint>
+    <constraint>Use Django messages framework for success/error feedback</constraint>
+    <constraint>Store credentials in session for display on credentials page</constraint>
+    <constraint>CSV export must include UTF-8 BOM for Excel compatibility</constraint>
+  </constraints>
+
+  <interfaces>
+    <interface>
+      <name>create_student_accounts</name>
+      <kind>function</kind>
+      <signature>create_student_accounts(students_data: List[Dict], class_assignment: Class, instructor_user: User) -> Tuple[List[Student], List[Dict]]</signature>
+      <path>students/services.py</path>
+      <description>Creates student accounts in bulk. Returns (created_students, creation_results). Already exists - needs @transaction.atomic decorator added.</description>
+    </interface>
+    <interface>
+      <name>generate_email</name>
+      <kind>function</kind>
+      <signature>generate_email(student_id: str) -> str</signature>
+      <path>students/services.py</path>
+      <description>Generates email in format: {student_id}@seoul.zep.internal</description>
+    </interface>
+    <interface>
+      <name>generate_password</name>
+      <kind>function</kind>
+      <signature>generate_password() -> str</signature>
+      <path>students/services.py</path>
+      <description>Generates secure random password using Django's get_random_string(12)</description>
+    </interface>
+    <interface>
+      <name>get_student_credentials</name>
+      <kind>function</kind>
+      <signature>get_student_credentials(creation_results: List[Dict]) -> List[Dict]</signature>
+      <path>students/services.py</path>
+      <description>Extracts credentials from creation results for display</description>
+    </interface>
+    <interface>
+      <name>export_credentials_csv</name>
+      <kind>function</kind>
+      <signature>export_credentials_csv(credentials: List[Dict]) -> str</signature>
+      <path>students/services.py</path>
+      <description>Exports credentials to CSV format with UTF-8 BOM</description>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+      Use Django TestCase framework. Test file: students/test_csv_upload.py (add new tests to this file).
+      Create test fixtures in setUp() method: test users, schools, classes.
+      Use Django test client for view testing.
+      Use SimpleUploadedFile for file upload testing.
+      All tests must pass with current 151 test suite.
+    </standards>
+
+    <locations>
+      students/test_csv_upload.py
+    </locations>
+
+    <ideas>
+      <test ac="AC1">Test email generation format: verify {student_id}@seoul.zep.internal for multiple students</test>
+      <test ac="AC2">Test User account creation: verify role='student', username format, is_active=True</test>
+      <test ac="AC3">Test password generation: verify passwords are unique, secure length (12 chars), random</test>
+      <test ac="AC4">Test Student record creation: verify linked to correct class_assignment, has user FK</test>
+      <test ac="AC5">Test performance: create 100 students and verify completion time < 30 seconds</test>
+      <test ac="AC6">Test transaction rollback: simulate duplicate student_id error, verify no students created (atomic operation)</test>
+      <test ac="AC6">Test transaction rollback: simulate User creation failure, verify rollback of all changes</test>
+      <test ac="AC7">Test credentials display: verify all fields shown (student_id, name, username, password, email)</test>
+      <test ac="AC7">Test CSV download: verify UTF-8 BOM present, correct headers, all credentials included</test>
+      <test ac="AC7">Test credentials session storage: verify stored after creation, cleared after view</test>
+      <test ac="1-7">Integration test: upload CSV → confirm → verify accounts created → view credentials → download CSV</test>
+    </ideas>
+  </tests>
+</story-context>

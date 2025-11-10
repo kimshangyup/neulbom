@@ -1,0 +1,64 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>학생 관리 - 늘봄학교 시스템</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50">
+    <div class="min-h-screen">
+        <nav class="bg-indigo-600 text-white p-4">
+            <div class="container mx-auto flex justify-between">
+                <h1 class="text-xl font-bold">늘봄학교 - 학생 관리</h1>
+                <div>
+                    <span class="mr-4">{{ request.user.get_full_name }}</span>
+                    <a href="{% url 'authentication:logout' %}" class="hover:underline">로그아웃</a>
+                </div>
+            </div>
+        </nav>
+        <div class="container mx-auto p-6">
+            <div class="flex justify-between mb-6">
+                <h2 class="text-2xl font-bold">학생 목록</h2>
+                <a href="{% url 'students:upload-csv' %}" class="bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700">+ 학생 등록 (CSV 업로드)</a>
+            </div>
+            <div class="bg-white shadow rounded p-4">
+                <table class="min-w-full">
+                    <thead>
+                        <tr>
+                            <th class="text-left p-2">이름</th>
+                            <th class="text-left p-2">학번</th>
+                            <th class="text-left p-2">학급</th>
+                            <th class="text-left p-2">학년</th>
+                            <th class="text-left p-2">ZEP 스페이스</th>
+                            <th class="text-left p-2">관리</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for student in students %}
+                        <tr class="border-t">
+                            <td class="p-2">{{ student.name }}</td>
+                            <td class="p-2">{{ student.student_id }}</td>
+                            <td class="p-2">{{ student.class_assignment }}</td>
+                            <td class="p-2">{{ student.grade|default:"-" }}</td>
+                            <td class="p-2">
+                                {% if student.zep_space_url %}
+                                    <a href="{{ student.zep_space_url }}" target="_blank" class="text-indigo-600 hover:underline">링크</a>
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </td>
+                            <td class="p-2">
+                                <a href="{% url 'students:edit_space' student.pk %}" class="text-indigo-600 hover:underline text-sm">스페이스 편집</a>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="6" class="p-4 text-center text-gray-500">등록된 학생이 없습니다.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

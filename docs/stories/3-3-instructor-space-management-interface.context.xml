@@ -1,0 +1,192 @@
+<story-context id="bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>3</epicId>
+    <storyId>3</storyId>
+    <title>Instructor Space Management Interface</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-04</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/stories/3-3-instructor-space-management-interface.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>an instructor</asA>
+    <iWant>to view and manage all student spaces in my classes</iWant>
+    <soThat>I can monitor student progress and access their spaces</soThat>
+    <tasks>
+- Task 1: Create instructor dashboard view (AC: 1)
+- Task 2: Create instructor dashboard template (AC: 1, 2, 3, 4)
+- Task 3: Implement pagination (AC: 6)
+- Task 4: Implement bulk actions (AC: 5)
+- Task 5: Implement CSV export (AC: 7)
+- Task 6: Add space status indicator (AC: 2)
+- Task 7: Add last activity tracking (AC: 2)
+- Task 8: Write comprehensive tests
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+1. Instructor dashboard includes "My Students" section
+2. Searchable table displays: student name, class, space URL, space status, last activity
+3. Click on space URL opens ZEP space in new tab
+4. Filter by class and search by student name
+5. Bulk actions: select multiple students, perform operations (e.g., send credentials)
+6. Table pagination for classes with 50+ students
+7. Export student list with credentials as CSV
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/PRD.md</path>
+        <title>Product Requirements Document</title>
+        <section>Functional Requirements - Bulk Student Registration</section>
+        <snippet>FR006-FR009: Instructors shall upload CSV rosters and system shall automatically generate student accounts with ZEP spaces. FR014-FR015: Administrator dashboard with real-time metrics and instructor-level status.</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Decision Architecture</title>
+        <section>Dashboard App Architecture</section>
+        <snippet>Multi-app structure with dashboard/ app for admin and instructor interfaces. Uses Django Templates + Tailwind CSS for server-side rendering, Nginx direct serving for static files.</snippet>
+      </doc>
+      <doc>
+        <path>docs/stories/3-1-administrator-dashboard-core-metrics.md</path>
+        <title>Story 3.1 - Administrator Dashboard Core Metrics</title>
+        <section>Dev Notes - Dashboard Infrastructure</section>
+        <snippet>Established dashboard app with metrics service, 5-minute caching, AJAX polling, Tailwind CSS templates, and CSV export pattern with UTF-8 BOM.</snippet>
+      </doc>
+      <doc>
+        <path>docs/stories/3-2-administrator-dashboard-instructor-activity.md</path>
+        <title>Story 3.2 - Administrator Dashboard Instructor Activity</title>
+        <section>Dev Notes - Query Patterns and Testing</section>
+        <snippet>Uses taught_classes relation for instructor queries. Client-side filtering/sorting with vanilla JavaScript. Reference test patterns in dashboard/test_instructor_activity.py.</snippet>
+      </doc>
+    </docs>
+    <code>
+      <artifact>
+        <path>dashboard/views.py</path>
+        <kind>view</kind>
+        <symbol>admin_dashboard, instructor_detail</symbol>
+        <lines>10-102</lines>
+        <reason>Existing dashboard views that establish patterns for instructor dashboard. Shows @admin_required decorator usage and metrics integration.</reason>
+      </artifact>
+      <artifact>
+        <path>dashboard/metrics.py</path>
+        <kind>service</kind>
+        <symbol>DashboardMetrics.get_instructor_activity</symbol>
+        <lines>140+</lines>
+        <reason>Service class with caching and aggregation patterns. Shows taught_classes relation usage for instructor queries.</reason>
+      </artifact>
+      <artifact>
+        <path>dashboard/export.py</path>
+        <kind>utility</kind>
+        <symbol>export_metrics_csv</symbol>
+        <lines>10-51</lines>
+        <reason>CSV export pattern with UTF-8 BOM for Excel compatibility. Reuse this pattern for student export.</reason>
+      </artifact>
+      <artifact>
+        <path>authentication/mixins.py</path>
+        <kind>decorator</kind>
+        <symbol>instructor_required</symbol>
+        <lines>157-175</lines>
+        <reason>Required decorator for instructor-only views. Allows both admin and instructor roles.</reason>
+      </artifact>
+      <artifact>
+        <path>students/models.py</path>
+        <kind>model</kind>
+        <symbol>Student, Class</symbol>
+        <lines>1+</lines>
+        <reason>Student model with zep_space_url field and is_space_created property. Class model with instructor FK via taught_classes.</reason>
+      </artifact>
+      <artifact>
+        <path>templates/dashboard/admin_dashboard.html</path>
+        <kind>template</kind>
+        <symbol>admin_dashboard</symbol>
+        <lines>1+</lines>
+        <reason>Reference template for Tailwind CSS styling patterns and responsive design.</reason>
+      </artifact>
+      <artifact>
+        <path>dashboard/test_instructor_activity.py</path>
+        <kind>test</kind>
+        <symbol>InstructorActivityTests</symbol>
+        <lines>1+</lines>
+        <reason>Reference test patterns for dashboard features: filtering, sorting, access control.</reason>
+      </artifact>
+    </code>
+    <dependencies>
+      <python>
+        <package name="Django" version="4.2.16"/>
+        <package name="mysqlclient" version=">=2.2.0"/>
+        <package name="pandas" version=">=2.0.0"/>
+        <package name="requests" version=">=2.31.0"/>
+        <package name="python-decouple" version=">=3.8"/>
+      </python>
+      <frontend>
+        <framework name="Tailwind CSS" version="latest"/>
+        <library name="Vanilla JavaScript" note="No external JS libraries"/>
+      </frontend>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint type="architecture">Extend existing dashboard/ app - do NOT create separate instructors/ app</constraint>
+    <constraint type="access-control">Use @instructor_required decorator from authentication.mixins for all instructor views</constraint>
+    <constraint type="styling">Use Tailwind CSS consistent with admin dashboard templates (responsive, accessible WCAG 2.1 AA)</constraint>
+    <constraint type="query">Use taught_classes relation for instructor-to-class queries (NOT class_set)</constraint>
+    <constraint type="export">Reuse CSV export pattern from dashboard/export.py with UTF-8 BOM for Excel compatibility</constraint>
+    <constraint type="pagination">Use Django Paginator for server-side pagination (50 students per page)</constraint>
+    <constraint type="javascript">Vanilla JavaScript only - no external JS libraries for filtering/sorting</constraint>
+    <constraint type="performance">Page load times under 3 seconds (NFR001 from PRD)</constraint>
+    <constraint type="data">ZEP space URLs are manually entered strings in Student.zep_space_url field - NO API integration</constraint>
+  </constraints>
+  <interfaces>
+    <interface>
+      <name>instructor_required decorator</name>
+      <kind>function decorator</kind>
+      <signature>@instructor_required\ndef view(request): ...</signature>
+      <path>authentication/mixins.py:157-175</path>
+    </interface>
+    <interface>
+      <name>Student model fields</name>
+      <kind>Django model</kind>
+      <signature>Student.zep_space_url (URLField), Student.is_space_created (property), Student.generated_email, Student.class_assignment (FK)</signature>
+      <path>students/models.py</path>
+    </interface>
+    <interface>
+      <name>Class model relation</name>
+      <kind>Django model</kind>
+      <signature>User.taught_classes (reverse FK from Class.instructor)</signature>
+      <path>students/models.py</path>
+    </interface>
+    <interface>
+      <name>CSV export utility</name>
+      <kind>function</kind>
+      <signature>export_metrics_csv(metrics) -> HttpResponse</signature>
+      <path>dashboard/export.py:10-51</path>
+    </interface>
+    <interface>
+      <name>Django Paginator</name>
+      <kind>Django utility</kind>
+      <signature>Paginator(queryset, per_page) -> page_obj</signature>
+      <path>django.core.paginator</path>
+    </interface>
+  </interfaces>
+  <tests>
+    <standards>Use Django unittest framework (django.test.TestCase). Follow patterns from dashboard/test_instructor_activity.py. Test coverage requirements: view rendering, access control, filtering/search, pagination (50+ students), bulk selection, CSV export with filters, clickable URLs (target="_blank"), empty states.</standards>
+    <locations>dashboard/test_instructor_dashboard.py (new file)</locations>
+    <ideas>
+      <idea ac="1">Test instructor dashboard view loads correctly with "My Students" section</idea>
+      <idea ac="2">Test student table displays: name, class, space URL, space status, last activity columns</idea>
+      <idea ac="3">Test space URLs are clickable and have target="_blank" attribute</idea>
+      <idea ac="4">Test class filter dropdown populated from instructor's classes only</idea>
+      <idea ac="4">Test student name search filters table correctly (case-insensitive)</idea>
+      <idea ac="5">Test bulk selection checkboxes work (individual + select all)</idea>
+      <idea ac="6">Test pagination activates for 50+ students with proper navigation</idea>
+      <idea ac="7">Test CSV export includes correct columns and filtered results</idea>
+      <idea ac="access-control">Test only instructors can access (not students, admins allowed)</idea>
+      <idea ac="access-control">Test instructor sees only their own students (not other instructors' students)</idea>
+      <idea ac="data-integrity">Test space status indicator shows correct state (Created vs Not Created)</idea>
+      <idea ac="edge-case">Test empty state when instructor has no students</idea>
+    </ideas>
+  </tests>
+</story-context>

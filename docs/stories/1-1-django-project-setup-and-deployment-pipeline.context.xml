@@ -1,0 +1,266 @@
+<story-context id="bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>1</epicId>
+    <storyId>1</storyId>
+    <title>Django Project Setup and Deployment Pipeline</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-03</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>/Users/user/neulbom/docs/stories/1-1-django-project-setup-and-deployment-pipeline.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>a developer</asA>
+    <iWant>a configured Django project with deployment infrastructure</iWant>
+    <soThat>we have a reliable foundation for building features</soThat>
+    <tasks>
+      <task id="1" ac="1,2">
+        <description>Initialize Django project with Python 3.8</description>
+        <subtasks>
+          <subtask>Create Django project using django-admin startproject neulbom</subtask>
+          <subtask>Install Django 4.2 LTS and required dependencies (mysqlclient for MySQL)</subtask>
+          <subtask>Create Django apps: authentication, instructors, students, spaces</subtask>
+          <subtask>Configure settings.py for development environment</subtask>
+          <subtask>Set up project directory structure per architecture</subtask>
+        </subtasks>
+      </task>
+      <task id="2" ac="1">
+        <description>Configure MySQL 8.0 database</description>
+        <subtasks>
+          <subtask>Install MySQL 8.0 locally or set up development database</subtask>
+          <subtask>Configure database settings in settings.py (mysqlclient driver)</subtask>
+          <subtask>Create initial database and user with appropriate permissions</subtask>
+          <subtask>Run initial migrations to create Django system tables</subtask>
+          <subtask>Verify database connectivity</subtask>
+        </subtasks>
+      </task>
+      <task id="3" ac="3">
+        <description>Set up Docker containerization for local development</description>
+        <subtasks>
+          <subtask>Create Dockerfile with Python 3.8 base image</subtask>
+          <subtask>Create docker-compose.yml with Django app and MySQL service</subtask>
+          <subtask>Configure environment variables for database connection</subtask>
+          <subtask>Set up volume mounts for code and database persistence</subtask>
+          <subtask>Verify docker-compose up successfully starts all services</subtask>
+          <subtask>Document Docker commands for common development tasks</subtask>
+        </subtasks>
+      </task>
+      <task id="4" ac="4">
+        <description>Configure CI/CD pipeline</description>
+        <subtasks>
+          <subtask>Set up GitHub Actions or equivalent CI service</subtask>
+          <subtask>Create workflow for automated testing on push/PR</subtask>
+          <subtask>Configure deployment workflow for production environment</subtask>
+          <subtask>Set up environment secrets (database credentials, API keys)</subtask>
+          <subtask>Verify pipeline runs successfully</subtask>
+        </subtasks>
+      </task>
+      <task id="5" ac="5,6">
+        <description>Set up production deployment infrastructure</description>
+        <subtasks>
+          <subtask>Provision DigitalOcean droplet or equivalent server</subtask>
+          <subtask>Install Nginx and configure as reverse proxy</subtask>
+          <subtask>Install and configure uWSGI for Django application</subtask>
+          <subtask>Configure SSL certificate for seoul.zep.us domain</subtask>
+          <subtask>Set up production database (MySQL 8.0)</subtask>
+          <subtask>Configure static file serving with Nginx</subtask>
+          <subtask>Set up log rotation and monitoring</subtask>
+          <subtask>Apply security hardening (firewall, SSH keys, fail2ban)</subtask>
+        </subtasks>
+      </task>
+      <task id="6" ac="7">
+        <description>Create health check endpoint</description>
+        <subtasks>
+          <subtask>Create /health/ URL endpoint in Django</subtask>
+          <subtask>Implement view that checks database connectivity</subtask>
+          <subtask>Return JSON response with status and timestamp</subtask>
+          <subtask>Add health check to URL configuration</subtask>
+          <subtask>Test health check returns 200 status code</subtask>
+        </subtasks>
+      </task>
+      <task id="7">
+        <description>Testing and validation</description>
+        <subtasks>
+          <subtask>Write unit tests for health check endpoint</subtask>
+          <subtask>Verify all apps are properly registered in settings</subtask>
+          <subtask>Test database migrations run without errors</subtask>
+          <subtask>Verify Docker environment works correctly</subtask>
+          <subtask>Test production deployment serves HTTPS correctly</subtask>
+          <subtask>Validate seoul.zep.us domain resolves and SSL is valid</subtask>
+        </subtasks>
+      </task>
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <criterion id="1">Django project initialized with PostgreSQL database configured</criterion>
+    <criterion id="2">Project structure includes apps for authentication, instructors, students, and spaces</criterion>
+    <criterion id="3">Docker containerization configured for local development</criterion>
+    <criterion id="4">CI/CD pipeline established for automated testing and deployment</criterion>
+    <criterion id="5">Production environment configured on AWS/GCP with HTTPS</criterion>
+    <criterion id="6">seoul.zep.us domain configured and SSL certificate installed</criterion>
+    <criterion id="7">Basic health check endpoint returns 200 status</criterion>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Decision Architecture</title>
+        <section>Project Initialization</section>
+        <snippet>Django project setup with django-admin startproject neulbom. Create five functional apps (accounts, instructors, students, spaces, dashboard) plus core utilities. Configure MySQL 8.0 with mysqlclient driver.</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Decision Architecture</title>
+        <section>Technology Stack Details</section>
+        <snippet>Python 3.8.x (EOL Oct 2024), Django 4.2 LTS (support until April 2026), MySQL 8.0, mysqlclient driver, uWSGI for WSGI server, Tailwind CSS for frontend, pandas for CSV processing.</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Decision Architecture</title>
+        <section>Deployment Stack</section>
+        <snippet>DigitalOcean Droplet with Nginx reverse proxy + static file serving, uWSGI application server, systemd process management. HTTPS enforcement with SSL certificate for seoul.zep.us domain.</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Decision Architecture</title>
+        <section>Project Structure</section>
+        <snippet>Multi-app Django structure with accounts, instructors, students, spaces, dashboard apps. Standard project layout with templates/, static/, staticfiles/, media/, logs/ directories.</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Decision Architecture</title>
+        <section>Security Architecture</section>
+        <snippet>Django PBKDF2 password hashing, SESSION_COOKIE_SECURE for HTTPS, CSRF protection enabled, role-based access control with decorators, HTTPS enforcement in production.</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Decision Architecture</title>
+        <section>Development Environment Setup</section>
+        <snippet>Python 3.8 virtualenv, Django 4.2 installation, MySQL 8.0 database creation, Tailwind CSS build process, .env configuration for environment variables.</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Decision Architecture</title>
+        <section>ADR-001: Python 3.8 Despite EOL</section>
+        <snippet>Accepted with warnings. Python 3.8 for development, but MUST upgrade to Python 3.10+ before production due to EOL October 2024.</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Decision Architecture</title>
+        <section>ADR-005: Manual DigitalOcean Deployment</section>
+        <snippet>Traditional Nginx + uWSGI deployment on DigitalOcean droplet. User responsible for deployment configuration, monitoring, and maintenance. Cost-efficient with full infrastructure control.</snippet>
+      </doc>
+      <doc>
+        <path>docs/PRD.md</path>
+        <title>Product Requirements Document</title>
+        <section>Non-Functional Requirements</section>
+        <snippet>NFR001: 500 concurrent users with page load < 3 seconds. NFR002: 100 students bulk upload < 30 seconds. NFR003: 99% uptime. NFR004: Korean personal data protection compliance.</snippet>
+      </doc>
+      <doc>
+        <path>docs/PRD.md</path>
+        <title>Product Requirements Document</title>
+        <section>Authentication & Authorization</section>
+        <snippet>FR001: ID/PW based authentication for all user roles (administrator, instructor, student). FR002: Role-based access control with three permission levels.</snippet>
+      </doc>
+    </docs>
+    <code>
+      <artifact>
+        <path>neulbom/settings.py</path>
+        <kind>config</kind>
+        <symbol>Django settings</symbol>
+        <lines>1-50</lines>
+        <reason>Base Django configuration file - needs extension for MySQL, apps, security settings</reason>
+      </artifact>
+      <artifact>
+        <path>neulbom/urls.py</path>
+        <kind>config</kind>
+        <symbol>URL routing</symbol>
+        <lines>all</lines>
+        <reason>Root URL configuration - needs health check endpoint</reason>
+      </artifact>
+      <artifact>
+        <path>manage.py</path>
+        <kind>script</kind>
+        <symbol>Django management</symbol>
+        <lines>all</lines>
+        <reason>Django project management script</reason>
+      </artifact>
+      <artifact>
+        <path>neulbom/wsgi.py</path>
+        <kind>config</kind>
+        <symbol>WSGI application</symbol>
+        <lines>all</lines>
+        <reason>WSGI entry point for uWSGI deployment</reason>
+      </artifact>
+    </code>
+    <dependencies>
+      <python>
+        <package name="Django" version="4.2" />
+        <package name="mysqlclient" version="latest stable" />
+        <package name="pandas" version="latest stable" />
+        <package name="requests" version="latest stable" />
+        <package name="python-decouple" version=">=3.8" />
+      </python>
+      <system>
+        <package name="Python" version="3.8.x" />
+        <package name="MySQL" version="8.0" />
+        <package name="Node.js" version="18+" note="for Tailwind CSS" />
+      </system>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint>Use Python 3.8.x (EOL Oct 2024 - upgrade to 3.10+ recommended before production)</constraint>
+    <constraint>Use Django 4.2 LTS (support until April 2026)</constraint>
+    <constraint>Use MySQL 8.0 with mysqlclient driver (not PyMySQL)</constraint>
+    <constraint>Multi-app structure: accounts, instructors, students, spaces, dashboard apps required</constraint>
+    <constraint>Traditional deployment: DigitalOcean + Nginx + uWSGI (no Docker in production)</constraint>
+    <constraint>Docker only for local development environment</constraint>
+    <constraint>HTTPS required for all production traffic with SSL for seoul.zep.us domain</constraint>
+    <constraint>Environment variables for sensitive configuration (no hardcoded secrets)</constraint>
+    <constraint>Health check endpoint must respond in &lt; 3 seconds (NFR002)</constraint>
+    <constraint>Korean PIPA compliance for data protection required</constraint>
+    <constraint>Server-side rendering with Django Templates + Tailwind CSS (no SPA)</constraint>
+    <constraint>Database sessions (no Redis/Celery infrastructure)</constraint>
+    <constraint>Static files served directly by Nginx (bypass Django)</constraint>
+    <constraint>Logging: Python logging with RotatingFileHandler, /var/log/neulbom/django.log</constraint>
+  </constraints>
+  <interfaces>
+    <interface>
+      <name>Health Check Endpoint</name>
+      <kind>REST endpoint</kind>
+      <signature>GET /health/ → JSON {status: string, timestamp: datetime}</signature>
+      <path>neulbom/urls.py (to be created)</path>
+    </interface>
+    <interface>
+      <name>Django Settings</name>
+      <kind>configuration</kind>
+      <signature>settings.py with DATABASE, INSTALLED_APPS, MIDDLEWARE, STATIC configuration</signature>
+      <path>neulbom/settings.py</path>
+    </interface>
+    <interface>
+      <name>WSGI Application</name>
+      <kind>WSGI interface</kind>
+      <signature>application = get_wsgi_application()</signature>
+      <path>neulbom/wsgi.py</path>
+    </interface>
+  </interfaces>
+  <tests>
+    <standards>Use Django's built-in TestCase for unit tests and pytest-django for complex scenarios. Coverage reporting integrated into CI pipeline. All tests run automatically via GitHub Actions on push/PR. Test framework: Django unittest for basic tests, pytest-django for advanced testing needs.</standards>
+    <locations>
+      <location>*/tests.py (small apps)</location>
+      <location>*/tests/ (larger apps with test_models.py, test_views.py, etc.)</location>
+    </locations>
+    <ideas>
+      <idea ac="7">Unit test for health check endpoint - verify 200 status code response</idea>
+      <idea ac="7">Integration test for health check database connectivity validation</idea>
+      <idea ac="1">Test database migrations run without errors</idea>
+      <idea ac="2">Verify all apps (authentication, instructors, students, spaces) are properly registered in INSTALLED_APPS</idea>
+      <idea ac="3">Verify Docker environment starts all services correctly with docker-compose up</idea>
+      <idea ac="4">Smoke test for CI/CD pipeline execution</idea>
+      <idea ac="5,6">Smoke test for production deployment - verify HTTPS serves correctly and domain resolves</idea>
+    </ideas>
+  </tests>
+</story-context>

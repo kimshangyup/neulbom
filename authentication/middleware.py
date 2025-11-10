@@ -18,6 +18,7 @@ class AuthenticationEnforcementMiddleware:
     - / (landing page)
     - /accounts/login/
     - /accounts/logout/
+    - /accounts/register/
     - /static/*
     - /media/*
     - /health/ (health check endpoint)
@@ -27,6 +28,7 @@ class AuthenticationEnforcementMiddleware:
         r'^/$',  # Landing page
         r'^/accounts/login/',
         r'^/accounts/logout/',
+        r'^/accounts/register/',  # Registration page
         r'^/static/',
         r'^/media/',
         r'^/health/',  # Health check endpoint

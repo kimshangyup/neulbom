@@ -220,8 +220,17 @@ def instructor_dashboard(request):
         'school'
     ).prefetch_related('students').order_by('school__name', 'name')
 
+    # Get schools created by this instructor (including those without classes)
+    instructor_schools = School.objects.filter(
+        Q(instructor=instructor) | Q(instructor__isnull=True)
+    ).order_by('name')
+
     # Structure data hierarchically by school
     schools_data = {}
+
+    # First, add all instructor's schools (even if they have no classes yet)
+    for school in instructor_schools:
+        schools_data[school.name] = []
 
     # Populate with classes
     for cls in classes:
@@ -237,8 +246,6 @@ def instructor_dashboard(request):
             'spaces_created': students.exclude(zep_space_url='').count(),
             'students': students
         })
-
-    # Only show schools that have classes (remove empty schools)
 
     # Calculate summary statistics
     total_classes = classes.count()
@@ -275,8 +282,17 @@ def create_school(request):
 
         try:
             data = json.loads(request.body)
+            school_name = data['name'].strip()
+
+            # Check if school with this name already exists
+            if School.objects.filter(name=school_name).exists():
+                return JsonResponse({
+                    'success': False,
+                    'error': '이미 존재하는 학교 이름입니다.'
+                }, status=400)
+
             school = School.objects.create(
-                name=data['name'],
+                name=school_name,
                 notes=data.get('notes', ''),
                 instructor=request.user  # Assign current instructor
             )

@@ -153,8 +153,8 @@ class ClassCreateForm(forms.ModelForm):
         class_obj.instructor = self.instructor
 
         # Set school from instructor's affiliated_school (if exists)
-        if hasattr(self.instructor, 'instructor') and self.instructor.instructor.affiliated_school:
-            class_obj.school = self.instructor.instructor.affiliated_school
+        if hasattr(self.instructor, 'instructor_profile') and self.instructor.instructor_profile.affiliated_school:
+            class_obj.school = self.instructor.instructor_profile.affiliated_school
         else:
             # Create default school if instructor has no school
             from datetime import datetime

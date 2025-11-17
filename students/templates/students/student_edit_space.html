@@ -22,8 +22,9 @@
                     
                     <div class="mb-6">
                         <p class="text-sm text-gray-600 mb-4">
-                            <strong>학번:</strong> {{ student.student_id }}<br>
-                            <strong>학급:</strong> {{ student.class_assignment }}
+                            <strong>학급:</strong> {{ student.class_assignment }}<br>
+                            <strong>반번호:</strong> {{ student.class_number|default:"-" }}<br>
+                            <strong>학년:</strong> {{ student.grade|default:"-" }}
                         </p>
                     </div>
                     

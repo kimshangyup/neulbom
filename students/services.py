@@ -44,35 +44,48 @@ class StudentAccountService:
     """Service class for student account operations"""
 
     @staticmethod
-    def generate_student_email(name: str, school_name: str) -> str:
+    def generate_student_username(name: str, school_name: str, class_name: str) -> tuple:
         """
-        Generate unique email address for student
+        Generate unique username and email for student
+
+        Simple format: student_[random_string]
+        This avoids issues with Korean character slugification.
 
         Args:
-            name: Student name
-            school_name: School name
+            name: Student name (not used in username, but kept for compatibility)
+            school_name: School name (not used in username, but kept for compatibility)
+            class_name: Class name (not used in username, but kept for compatibility)
 
         Returns:
-            str: Generated email address
+            tuple: (username, email)
         """
-        import re
-        from django.utils.text import slugify
+        import time
 
-        # Normalize name and school for email
-        name_slug = slugify(name).replace('-', '')
-        school_slug = slugify(school_name).replace('-', '')
+        # Generate simple username with timestamp and random suffix
+        timestamp = str(int(time.time() * 1000))[-8:]  # Last 8 digits of timestamp
+        random_suffix = secrets.token_hex(4)  # 8 characters
 
-        # Base email
-        base_email = f"{name_slug}.{school_slug}@neulbom.internal"
+        username = f"student_{timestamp}_{random_suffix}"
 
-        # Check if email exists and add number suffix if needed
-        email = base_email
+        # Check if username exists and regenerate if needed (should be very rare)
+        counter = 0
+        while User.objects.filter(username=username).exists():
+            counter += 1
+            random_suffix = secrets.token_hex(4)
+            username = f"student_{timestamp}_{random_suffix}_{counter}"
+            if counter > 10:  # Safety limit
+                break
+
+        # Generate email from username
+        email = f"{username}@neulbom.internal"
+
+        # Ensure email is unique
         counter = 1
         while Student.objects.filter(generated_email=email).exists():
-            email = f"{name_slug}.{school_slug}.{counter}@neulbom.internal"
+            email = f"{username}{counter}@neulbom.internal"
             counter += 1
 
-        return email
+        return username, email
 
 
 def create_student_accounts(
@@ -115,9 +128,12 @@ def create_student_accounts(
                 grade = student_data.get('grade', '')
                 notes = student_data.get('notes', '')
 
-                # Generate unique email for student
-                email = StudentAccountService.generate_student_email(name, class_assignment.school.name)
-                username = email  # Use email as username
+                # Generate unique username and email for student
+                username, email = StudentAccountService.generate_student_username(
+                    name,
+                    class_assignment.school.name,
+                    class_assignment.name
+                )
 
                 # Check if username already exists (should be unique due to email generation logic)
                 if User.objects.filter(username=username).exists():
@@ -278,11 +294,15 @@ def create_students_from_csv_with_auto_school_class(
                     class_number = student_data.get('class_number')
                     grade = student_data.get('grade')
                     notes = student_data.get('notes', '')
+                    zep_space_url = student_data.get('zep_space_url', '')
 
                     try:
-                        # Generate unique email
-                        email = StudentAccountService.generate_student_email(name, school_name)
-                        username = email
+                        # Generate unique username and email
+                        username, email = StudentAccountService.generate_student_username(
+                            name,
+                            school_name,
+                            class_name
+                        )
 
                         # Generate password
                         password = generate_password()
@@ -306,7 +326,8 @@ def create_students_from_csv_with_auto_school_class(
                             grade=int(grade) if grade and not pd.isna(grade) else None,
                             class_assignment=class_obj,
                             generated_email=email,
-                            notes=notes
+                            notes=notes,
+                            zep_space_url=zep_space_url if zep_space_url else ''
                         )
 
                         created_students.append(student)
@@ -369,6 +390,8 @@ def get_student_credentials(creation_results: List[Dict]) -> List[Dict]:
         if result['success']:
             credentials.append({
                 'name': result['name'],
+                'school_name': result.get('school_name', ''),
+                'class_name': result.get('class_name', ''),
                 'class_number': result.get('class_number'),
                 'grade': result.get('grade'),
                 'username': result['username'],
@@ -396,17 +419,18 @@ def export_credentials_csv(credentials: List[Dict]) -> str:
     writer = csv.writer(output)
 
     # Write header
-    writer.writerow(['이름', '반', '학년', '아이디', '비밀번호', '이메일'])
+    writer.writerow(['학교', '학급', '이름', '반번호', '학년', '아이디', '비밀번호'])
 
     # Write data
     for cred in credentials:
         writer.writerow([
+            cred.get('school_name', '-'),
+            cred.get('class_name', '-'),
             cred['name'],
             cred.get('class_number', '-'),
             cred.get('grade', '-'),
             cred['username'],
-            cred['password'],
-            cred['email']
+            cred['password']
         ])
 
     return output.getvalue()

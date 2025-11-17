@@ -65,6 +65,43 @@ def student_upload(request):
                 try:
                     students_data = form.parse_csv()
 
+                    # Check for duplicates
+                    from students.models import School, Class
+                    from collections import defaultdict
+
+                    # Group by school/class and check duplicates
+                    for student in students_data:
+                        school_name = student.get('school_name')
+                        class_name = student.get('class_name')
+                        name = student.get('student_name')
+
+                        # Check if school and class exist
+                        school = School.objects.filter(name=school_name).first()
+                        if school:
+                            class_obj = Class.objects.filter(
+                                name=class_name,
+                                school=school,
+                                instructor=request.user
+                            ).first()
+
+                            if class_obj:
+                                # Check if student already exists
+                                from students.models import Student
+                                existing = Student.objects.filter(
+                                    name=name,
+                                    class_assignment=class_obj
+                                ).first()
+
+                                if existing:
+                                    student['is_duplicate'] = True
+                                    student['duplicate_warning'] = f'{name}은(는) 이미 {school_name} {class_name}에 등록되어 있습니다.'
+                                else:
+                                    student['is_duplicate'] = False
+                            else:
+                                student['is_duplicate'] = False
+                        else:
+                            student['is_duplicate'] = False
+
                     # Store data in session for confirmation step
                     request.session['upload_data'] = {
                         'students': students_data,
@@ -93,6 +130,13 @@ def student_upload(request):
                 from .services import create_students_from_csv_with_auto_school_class, get_student_credentials
 
                 students_data = upload_data['students']
+
+                # Get selected students from checkboxes (exclude duplicates if unchecked)
+                selected_indices = request.POST.getlist('selected_students')
+                if selected_indices:
+                    # Filter to only include selected students
+                    selected_indices = [int(idx) for idx in selected_indices]
+                    students_data = [students_data[idx] for idx in selected_indices if idx < len(students_data)]
 
                 # Create student accounts with auto school/class creation
                 created_students, creation_results = create_students_from_csv_with_auto_school_class(
@@ -149,8 +193,8 @@ def student_upload(request):
                 # Clean up session
                 del request.session['upload_data']
 
-                # Redirect to credentials page
-                return redirect('students:credentials')
+                # Redirect to instructor dashboard
+                return redirect('dashboard:instructor_dashboard')
 
             except Exception as e:
                 logger.error(f"Error creating student accounts: {e}")
@@ -250,7 +294,7 @@ def download_template(request):
     """
     Download CSV template for student roster
 
-    Returns CSV file with required columns: student_name, student_id, grade, notes
+    Returns CSV file with required columns: school_name, class_name, student_name, class_number, grade, zep_space_url
     """
     response = HttpResponse(content_type='text/csv; charset=utf-8')
     response['Content-Disposition'] = 'attachment; filename="student_template.csv"'
@@ -259,10 +303,10 @@ def download_template(request):
     response.write('\ufeff')
 
     writer = csv.writer(response)
-    writer.writerow(['student_name', 'student_id', 'grade', 'notes'])
-    writer.writerow(['홍길동', '20250001', '1', '예시 학생'])
-    writer.writerow(['김철수', '20250002', '2', ''])
-    writer.writerow(['이영희', '20250003', '1', ''])
+    writer.writerow(['school_name', 'class_name', 'student_name', 'class_number', 'grade', 'zep_space_url'])
+    writer.writerow(['서울초등학교', '1학년 A반', '홍길동', '1', '1', 'https://zep.us/play/example1'])
+    writer.writerow(['서울초등학교', '1학년 A반', '김철수', '2', '1', 'https://zep.us/play/example2'])
+    writer.writerow(['서울초등학교', '2학년 B반', '이영희', '1', '2', ''])
 
     logger.info(f"Template downloaded by {request.user.username}")
 

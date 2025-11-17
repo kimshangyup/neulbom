@@ -10,31 +10,6 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-@instructor_required
-def instructor_dashboard(request):
-    """
-    Instructor dashboard with Student Management section.
-
-    Displays instructor's classes and provides navigation to student management features.
-    """
-    # Get instructor's classes
-    classes = Class.objects.filter(
-        instructor=request.user
-    ).select_related('school').prefetch_related('students')
-
-    # Calculate statistics
-    total_classes = classes.count()
-    total_students = sum(c.student_count() for c in classes)
-
-    context = {
-        'classes': classes,
-        'total_classes': total_classes,
-        'total_students': total_students,
-    }
-
-    return render(request, 'instructors/dashboard.html', context)
-
-
 @admin_required
 def instructor_list(request):
     """
@@ -176,7 +151,7 @@ def class_create(request):
                     request,
                     f'학급 "{class_obj.name}"이(가) 생성되었습니다.'
                 )
-                return redirect('instructors:dashboard')
+                return redirect('dashboard:instructor_dashboard')
             except Exception as e:
                 logger.error(f"Error creating class: {e}")
                 messages.error(request, f'학급 생성 중 오류가 발생했습니다: {e}')

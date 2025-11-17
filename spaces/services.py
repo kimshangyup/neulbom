@@ -34,7 +34,7 @@ def create_student_space(
     Raises:
         ZEPAPIError: If space creation or permission setting fails
     """
-    logger.info(f"Creating ZEP space for student: {student.name} ({student.student_id})")
+    logger.info(f"Creating ZEP space for student: {student.name} ({student.generated_email})")
 
     zep_client = get_zep_client()
 
@@ -86,7 +86,7 @@ def create_student_space(
 
     except ZEPAPIError as e:
         error_msg = str(e)
-        logger.error(f"Failed to create space for student {student.student_id}: {error_msg}")
+        logger.error(f"Failed to create space for student {student.name} ({student.generated_email}): {error_msg}")
 
         # Record failure for manual review
         FailedSpaceCreation.objects.create(
@@ -162,7 +162,7 @@ def retry_failed_space_creation(failed_creation: FailedSpaceCreation) -> bool:
     Returns:
         bool: True if retry successful
     """
-    logger.info(f"Retrying space creation for student: {failed_creation.student.student_id}")
+    logger.info(f"Retrying space creation for student: {failed_creation.student.name} ({failed_creation.student.generated_email})")
 
     student = failed_creation.student
     instructor_email = student.class_assignment.instructor.email if student.class_assignment else None
@@ -181,13 +181,13 @@ def retry_failed_space_creation(failed_creation: FailedSpaceCreation) -> bool:
         failed_creation.resolved = True
         failed_creation.resolved_at = datetime.now()
         failed_creation.save()
-        logger.info(f"Space creation retry successful for student: {student.student_id}")
+        logger.info(f"Space creation retry successful for student: {student.name} ({student.generated_email})")
         return True
     else:
         # Increment retry count
         failed_creation.retry_count += 1
         failed_creation.save()
-        logger.warning(f"Space creation retry failed for student: {student.student_id}")
+        logger.warning(f"Space creation retry failed for student: {student.name} ({student.generated_email})")
         return False
 
 

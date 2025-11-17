@@ -36,7 +36,7 @@ class StudentUploadForm(forms.Form):
     """
     file = forms.FileField(
         label='학생 명단 파일',
-        help_text='CSV 파일에는 school_name, class_name, student_name 열이 필수입니다',
+        help_text='CSV 파일에는 school_name, class_name, student_name 열이 필수입니다. class_number, grade, zep_space_url은 선택입니다.',
         widget=forms.FileInput(attrs={
             'class': 'block w-full text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 focus:outline-none',
             'accept': '.csv,.xlsx,.xls'

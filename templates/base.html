@@ -36,7 +36,7 @@
                         <a href="/dashboard/" class="hover:bg-indigo-700 px-3 py-2 rounded transition">대시보드</a>
                         <a href="{% url 'instructors:list' %}" class="hover:bg-indigo-700 px-3 py-2 rounded transition">강사 관리</a>
                     {% elif request.user.role == 'instructor' %}
-                        <a href="{% url 'instructors:dashboard' %}" class="hover:bg-indigo-700 px-3 py-2 rounded transition">대시보드</a>
+                        <a href="{% url 'dashboard:instructor_dashboard' %}" class="hover:bg-indigo-700 px-3 py-2 rounded transition">대시보드</a>
                         <a href="{% url 'students:list' %}" class="hover:bg-indigo-700 px-3 py-2 rounded transition">학생 목록</a>
                         <a href="{% url 'students:upload-csv' %}" class="hover:bg-indigo-700 px-3 py-2 rounded transition">학생 등록</a>
                     {% endif %}

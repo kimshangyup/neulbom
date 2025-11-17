@@ -24,7 +24,7 @@ class CSVValidator:
     """
 
     REQUIRED_COLUMNS = ['school_name', 'class_name', 'student_name']
-    OPTIONAL_COLUMNS = ['class_number', 'grade', 'notes']
+    OPTIONAL_COLUMNS = ['class_number', 'grade', 'zep_space_url']
 
     def __init__(self):
         self.errors = []
@@ -152,6 +152,11 @@ class CSVValidator:
         else:
             df['notes'] = df['notes'].fillna('').astype(str).str.strip()
 
+        if 'zep_space_url' not in df.columns:
+            df['zep_space_url'] = ''
+        else:
+            df['zep_space_url'] = df['zep_space_url'].fillna('').astype(str).str.strip()
+
         # Validate each row
         for idx, row in df.iterrows():
             row_num = idx + 2  # +2 because: pandas index starts at 0, header is row 1
@@ -191,5 +196,10 @@ class CSVValidator:
                 if row['class_number'] < 1:
                     self.errors.append(f"줄 {row_num}: 반 번호는 1 이상이어야 합니다. (입력값: {int(row['class_number'])})")
                     valid = False
+
+            # Validate zep_space_url if provided
+            if row['zep_space_url'] and len(row['zep_space_url']) > 500:
+                self.errors.append(f"줄 {row_num}: ZEP 스페이스 URL이 너무 깁니다 (최대 500자).")
+                valid = False
 
         return valid

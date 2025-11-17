@@ -35,14 +35,6 @@
                 <form method="POST" enctype="multipart/form-data" id="upload-form">
                     {% csrf_token %}
 
-                    <div class="mb-4">
-                        <label class="block text-sm font-medium mb-2">{{ form.class_assignment.label }}</label>
-                        {{ form.class_assignment }}
-                        {% if form.class_assignment.errors %}
-                            <p class="text-red-600 text-sm mt-1">{{ form.class_assignment.errors.0 }}</p>
-                        {% endif %}
-                    </div>
-
                     <!-- Drag and Drop Zone -->
                     <div class="mb-6">
                         <label class="block text-sm font-medium mb-2">{{ form.file.label }}</label>

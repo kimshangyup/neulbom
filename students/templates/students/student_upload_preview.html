@@ -16,25 +16,61 @@
         <div class="container mx-auto p-6">
             <div class="bg-white shadow rounded p-6">
                 <h2 class="text-2xl font-bold mb-4">등록 미리보기</h2>
-                <p class="mb-4 text-gray-700">배정 학급: <strong>{{ class_assignment }}</strong></p>
-                <p class="mb-6 text-gray-700">총 {{ students_data|length }}명의 학생이 등록됩니다.</p>
-                
+                <p class="mb-6 text-gray-700">총 {{ students_data|length }}명의 학생 데이터를 확인했습니다. 등록할 학생을 선택하세요.</p>
+
+                <div class="mb-4 bg-yellow-50 border-l-4 border-yellow-400 p-4">
+                    <p class="text-sm text-yellow-700">
+                        <strong>안내:</strong> 중복된 학생은 빨간색으로 표시됩니다. 체크박스를 해제하면 해당 학생은 등록하지 않습니다.
+                    </p>
+                </div>
+
+                <div class="mb-4 flex space-x-3">
+                    <button type="button" onclick="selectAll()" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 text-sm">
+                        전체 선택
+                    </button>
+                    <button type="button" onclick="selectNone()" class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600 text-sm">
+                        전체 해제
+                    </button>
+                    <button type="button" onclick="selectNew()" class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 text-sm">
+                        신규만 선택
+                    </button>
+                </div>
+
                 <table class="min-w-full mb-6">
                     <thead>
                         <tr class="bg-gray-100">
-                            <th class="p-2 text-left">학번</th>
+                            <th class="p-2 text-left">선택</th>
+                            <th class="p-2 text-left">학교</th>
+                            <th class="p-2 text-left">학급</th>
                             <th class="p-2 text-left">이름</th>
+                            <th class="p-2 text-left">반번호</th>
                             <th class="p-2 text-left">학년</th>
-                            <th class="p-2 text-left">생성될 이메일</th>
+                            <th class="p-2 text-left">ZEP 스페이스 URL</th>
+                            <th class="p-2 text-left">상태</th>
                         </tr>
                     </thead>
                     <tbody>
                         {% for student in students_data %}
-                        <tr class="border-t">
-                            <td class="p-2">{{ student.student_id }}</td>
-                            <td class="p-2">{{ student.student_name }}</td>
+                        <tr class="border-t {% if student.is_duplicate %}bg-red-50{% endif %}">
+                            <td class="p-2">
+                                <input type="checkbox" name="selected_students" value="{{ forloop.counter0 }}"
+                                       {% if not student.is_duplicate %}checked{% endif %}
+                                       class="h-4 w-4 rounded border-gray-300">
+                            </td>
+                            <td class="p-2">{{ student.school_name }}</td>
+                            <td class="p-2">{{ student.class_name }}</td>
+                            <td class="p-2 {% if student.is_duplicate %}font-bold text-red-700{% endif %}">{{ student.student_name }}</td>
+                            <td class="p-2">{{ student.class_number|default:"-" }}</td>
                             <td class="p-2">{{ student.grade|default:"-" }}</td>
-                            <td class="p-2">{{ student.student_id }}@seoul.zep.internal</td>
+                            <td class="p-2 text-xs">{{ student.zep_space_url|default:"-" }}</td>
+                            <td class="p-2 text-xs">
+                                {% if student.is_duplicate %}
+                                    <span class="text-red-600 font-semibold">⚠️ 중복</span>
+                                    <br><span class="text-red-600 text-xs">{{ student.duplicate_warning }}</span>
+                                {% else %}
+                                    <span class="text-green-600">✓ 신규</span>
+                                {% endif %}
+                            </td>
                         </tr>
                         {% endfor %}
                     </tbody>
@@ -54,5 +90,23 @@
             </div>
         </div>
     </div>
+
+    <script>
+        function selectAll() {
+            document.querySelectorAll('input[name="selected_students"]').forEach(cb => cb.checked = true);
+        }
+
+        function selectNone() {
+            document.querySelectorAll('input[name="selected_students"]').forEach(cb => cb.checked = false);
+        }
+
+        function selectNew() {
+            document.querySelectorAll('input[name="selected_students"]').forEach((cb, index) => {
+                const row = cb.closest('tr');
+                const isDuplicate = row.classList.contains('bg-red-50');
+                cb.checked = !isDuplicate;
+            });
+        }
+    </script>
 </body>
 </html>

@@ -27,8 +27,8 @@
                     <thead>
                         <tr>
                             <th class="text-left p-2">이름</th>
-                            <th class="text-left p-2">학번</th>
                             <th class="text-left p-2">학급</th>
+                            <th class="text-left p-2">반번호</th>
                             <th class="text-left p-2">학년</th>
                             <th class="text-left p-2">ZEP 스페이스</th>
                             <th class="text-left p-2">관리</th>
@@ -38,8 +38,8 @@
                         {% for student in students %}
                         <tr class="border-t">
                             <td class="p-2">{{ student.name }}</td>
-                            <td class="p-2">{{ student.student_id }}</td>
                             <td class="p-2">{{ student.class_assignment }}</td>
+                            <td class="p-2">{{ student.class_number|default:"-" }}</td>
                             <td class="p-2">{{ student.grade|default:"-" }}</td>
                             <td class="p-2">
                                 {% if student.zep_space_url %}

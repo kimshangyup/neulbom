@@ -14,13 +14,43 @@
             </div>
         </nav>
         <div class="container mx-auto p-6">
+            <!-- Progress Steps -->
+            <div class="mb-6">
+                <div class="flex items-center justify-center space-x-4">
+                    <div class="flex items-center">
+                        <div class="w-8 h-8 bg-green-500 text-white rounded-full flex items-center justify-center font-bold text-sm">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                            </svg>
+                        </div>
+                        <span class="ml-2 text-sm font-medium text-green-600">파일 업로드</span>
+                    </div>
+                    <div class="w-12 h-0.5 bg-green-500"></div>
+                    <div class="flex items-center">
+                        <div class="w-8 h-8 bg-indigo-600 text-white rounded-full flex items-center justify-center font-bold text-sm">2</div>
+                        <span class="ml-2 text-sm font-medium text-indigo-600">미리보기</span>
+                    </div>
+                    <div class="w-12 h-0.5 bg-gray-300"></div>
+                    <div class="flex items-center">
+                        <div class="w-8 h-8 bg-gray-300 text-gray-500 rounded-full flex items-center justify-center font-bold text-sm">3</div>
+                        <span class="ml-2 text-sm font-medium text-gray-400">완료</span>
+                    </div>
+                </div>
+            </div>
+
             <div class="bg-white shadow rounded p-6">
-                <h2 class="text-2xl font-bold mb-4">등록 미리보기</h2>
-                <p class="mb-6 text-gray-700">총 {{ students_data|length }}명의 학생 데이터를 확인했습니다. 등록할 학생을 선택하세요.</p>
+                <h2 class="text-2xl font-bold mb-2">등록 미리보기</h2>
+                <p class="mb-6 text-gray-700">총 <span class="font-bold text-indigo-600">{{ students_data|length }}명</span>의 학생 데이터를 확인했습니다. 등록할 학생을 선택한 후 <span class="font-bold">확인 및 등록</span> 버튼을 클릭하세요.</p>
 
                 <div class="mb-4 bg-yellow-50 border-l-4 border-yellow-400 p-4">
                     <p class="text-sm text-yellow-700">
                         <strong>안내:</strong> 중복된 학생은 빨간색으로 표시됩니다. 체크박스를 해제하면 해당 학생은 등록하지 않습니다.
+                    </p>
+                </div>
+
+                <div class="mb-4 bg-blue-50 border-l-4 border-blue-400 p-4">
+                    <p class="text-sm text-blue-700">
+                        <strong>등록 후 안내:</strong> "확인 및 등록" 버튼을 클릭하면 선택한 학생들의 계정이 자동 생성되고, ZEP 스페이스가 자동으로 생성됩니다. 완료 후 대시보드에서 결과를 확인할 수 있습니다.
                     </p>
                 </div>
 
@@ -78,13 +108,24 @@
                         </tbody>
                     </table>
 
-                    <div class="flex space-x-3">
-                        <button type="submit" name="confirm" class="bg-green-600 text-white px-6 py-2 rounded hover:bg-green-700">
-                            확인 및 등록 (<span id="selected-count">0</span>명)
-                        </button>
-                        <a href="{% url 'students:upload-csv' %}" class="bg-gray-200 px-6 py-2 rounded hover:bg-gray-300">
-                            취소
-                        </a>
+                    <!-- Sticky Bottom Bar -->
+                    <div class="bg-gray-50 border-t border-gray-200 -mx-6 -mb-6 px-6 py-4 mt-6 rounded-b sticky bottom-0">
+                        <div class="flex items-center justify-between">
+                            <div class="text-sm text-gray-600">
+                                선택된 학생: <span id="selected-count" class="font-bold text-indigo-600">0</span>명
+                            </div>
+                            <div class="flex space-x-3">
+                                <a href="{% url 'students:upload-csv' %}" class="bg-gray-200 px-6 py-3 rounded-lg hover:bg-gray-300 font-medium">
+                                    이전 단계로
+                                </a>
+                                <button type="submit" name="confirm" class="bg-green-600 text-white px-8 py-3 rounded-lg hover:bg-green-700 font-bold flex items-center shadow-lg">
+                                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                                    </svg>
+                                    확인 및 등록
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </form>
             </div>

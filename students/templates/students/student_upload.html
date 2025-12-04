@@ -22,8 +22,29 @@
                 {% endfor %}
             {% endif %}
 
+            <!-- Progress Steps -->
+            <div class="mb-6">
+                <div class="flex items-center justify-center space-x-4">
+                    <div class="flex items-center">
+                        <div class="w-8 h-8 bg-indigo-600 text-white rounded-full flex items-center justify-center font-bold text-sm">1</div>
+                        <span class="ml-2 text-sm font-medium text-indigo-600">파일 업로드</span>
+                    </div>
+                    <div class="w-12 h-0.5 bg-gray-300"></div>
+                    <div class="flex items-center">
+                        <div class="w-8 h-8 bg-gray-300 text-gray-500 rounded-full flex items-center justify-center font-bold text-sm">2</div>
+                        <span class="ml-2 text-sm font-medium text-gray-400">미리보기</span>
+                    </div>
+                    <div class="w-12 h-0.5 bg-gray-300"></div>
+                    <div class="flex items-center">
+                        <div class="w-8 h-8 bg-gray-300 text-gray-500 rounded-full flex items-center justify-center font-bold text-sm">3</div>
+                        <span class="ml-2 text-sm font-medium text-gray-400">완료</span>
+                    </div>
+                </div>
+            </div>
+
             <div class="bg-white shadow rounded p-6">
-                <h2 class="text-2xl font-bold mb-6">학생 명단 업로드</h2>
+                <h2 class="text-2xl font-bold mb-2">학생 명단 업로드</h2>
+                <p class="text-gray-600 mb-6">CSV 또는 Excel 파일을 업로드하면 미리보기 화면에서 확인 후 등록할 수 있습니다.</p>
 
                 <div class="mb-6">
                     <a href="{% url 'students:download-template' %}" class="text-indigo-600 hover:underline">
@@ -70,13 +91,17 @@
                     </div>
 
                     <div class="flex space-x-3">
-                        <button type="submit" name="preview" class="bg-indigo-600 text-white px-6 py-2 rounded hover:bg-indigo-700" id="submit-btn">
-                            미리보기
+                        <button type="submit" name="preview" class="bg-indigo-600 text-white px-6 py-3 rounded-lg hover:bg-indigo-700 font-medium flex items-center" id="submit-btn">
+                            <span>다음: 미리보기</span>
+                            <svg class="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path>
+                            </svg>
                         </button>
-                        <a href="{% url 'students:list' %}" class="bg-gray-200 px-6 py-2 rounded hover:bg-gray-300">
+                        <a href="{% url 'dashboard:instructor_dashboard' %}" class="bg-gray-200 px-6 py-3 rounded-lg hover:bg-gray-300 font-medium">
                             취소
                         </a>
                     </div>
+                    <p class="text-sm text-gray-500 mt-3">파일 업로드 후 미리보기 화면에서 등록할 학생을 선택할 수 있습니다.</p>
                 </form>
             </div>
         </div>

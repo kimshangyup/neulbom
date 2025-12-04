@@ -89,9 +89,49 @@ def admin_dashboard(request):
         'classes_per_school': json.dumps(classes_per_school),
     }
 
+    # Get school data for school management section
+    school_data = []
+    for school in schools:
+        # Count instructors assigned to this school
+        instructor_count = User.objects.filter(
+            role='instructor',
+            affiliated_school=school
+        ).count()
+
+        # Count all classes (not just those with instructors)
+        class_count = Class.objects.filter(school=school).count()
+
+        # Count all students
+        student_count = Student.objects.filter(
+            class_assignment__school=school
+        ).count()
+
+        # Get instructors list
+        school_instructors = User.objects.filter(
+            role='instructor',
+            affiliated_school=school
+        ).values_list('first_name', 'last_name', 'username')
+
+        instructor_names = [
+            f"{fn} {ln}".strip() or un
+            for fn, ln, un in school_instructors
+        ]
+
+        school_data.append({
+            'id': school.id,
+            'name': school.name,
+            'notes': school.notes,
+            'instructor_count': instructor_count,
+            'class_count': class_count,
+            'student_count': student_count,
+            'instructor_names': instructor_names,
+            'created_at': school.created_at,
+        })
+
     context = {
         'metrics': metrics,
         'instructors': instructor_data,
+        'schools': school_data,
         'chart_data': chart_data,
     }
     return render(request, 'dashboard/admin_dashboard.html', context)

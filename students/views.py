@@ -164,15 +164,24 @@ def student_upload(request):
                         f'{failure_count}명의 학생 계정 생성에 실패했습니다.'
                     )
 
-                # Create ZEP spaces for created students
-                if created_students:
+                # Create ZEP spaces for students who don't already have a space URL
+                students_without_space = [s for s in created_students if not s.zep_space_url]
+                students_with_space = len(created_students) - len(students_without_space)
+
+                if students_with_space > 0:
+                    messages.info(
+                        request,
+                        f'{students_with_space}명의 학생은 이미 ZEP 스페이스 URL이 등록되어 있습니다.'
+                    )
+
+                if students_without_space:
                     from spaces.services import create_spaces_for_students, get_admin_emails
 
                     instructor_email = request.user.email
                     admin_emails = get_admin_emails()
 
                     space_results = create_spaces_for_students(
-                        students=created_students,
+                        students=students_without_space,
                         instructor_email=instructor_email,
                         admin_emails=admin_emails
                     )

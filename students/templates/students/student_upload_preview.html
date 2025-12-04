@@ -36,51 +36,51 @@
                     </button>
                 </div>
 
-                <table class="min-w-full mb-6">
-                    <thead>
-                        <tr class="bg-gray-100">
-                            <th class="p-2 text-left">선택</th>
-                            <th class="p-2 text-left">학교</th>
-                            <th class="p-2 text-left">학급</th>
-                            <th class="p-2 text-left">이름</th>
-                            <th class="p-2 text-left">반번호</th>
-                            <th class="p-2 text-left">학년</th>
-                            <th class="p-2 text-left">ZEP 스페이스 URL</th>
-                            <th class="p-2 text-left">상태</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for student in students_data %}
-                        <tr class="border-t {% if student.is_duplicate %}bg-red-50{% endif %}">
-                            <td class="p-2">
-                                <input type="checkbox" name="selected_students" value="{{ forloop.counter0 }}"
-                                       {% if not student.is_duplicate %}checked{% endif %}
-                                       class="h-4 w-4 rounded border-gray-300">
-                            </td>
-                            <td class="p-2">{{ student.school_name }}</td>
-                            <td class="p-2">{{ student.class_name }}</td>
-                            <td class="p-2 {% if student.is_duplicate %}font-bold text-red-700{% endif %}">{{ student.student_name }}</td>
-                            <td class="p-2">{{ student.class_number|default:"-" }}</td>
-                            <td class="p-2">{{ student.grade|default:"-" }}</td>
-                            <td class="p-2 text-xs">{{ student.zep_space_url|default:"-" }}</td>
-                            <td class="p-2 text-xs">
-                                {% if student.is_duplicate %}
-                                    <span class="text-red-600 font-semibold">⚠️ 중복</span>
-                                    <br><span class="text-red-600 text-xs">{{ student.duplicate_warning }}</span>
-                                {% else %}
-                                    <span class="text-green-600">✓ 신규</span>
-                                {% endif %}
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-                
-                <form method="POST" action="{% url 'students:upload-csv' %}">
+                <form method="POST" action="{% url 'students:upload-csv' %}" id="upload-form">
                     {% csrf_token %}
+                    <table class="min-w-full mb-6">
+                        <thead>
+                            <tr class="bg-gray-100">
+                                <th class="p-2 text-left">선택</th>
+                                <th class="p-2 text-left">학교</th>
+                                <th class="p-2 text-left">학급</th>
+                                <th class="p-2 text-left">이름</th>
+                                <th class="p-2 text-left">반번호</th>
+                                <th class="p-2 text-left">학년</th>
+                                <th class="p-2 text-left">ZEP 스페이스 URL</th>
+                                <th class="p-2 text-left">상태</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for student in students_data %}
+                            <tr class="border-t {% if student.is_duplicate %}bg-red-50{% endif %}">
+                                <td class="p-2">
+                                    <input type="checkbox" name="selected_students" value="{{ forloop.counter0 }}"
+                                           {% if not student.is_duplicate %}checked{% endif %}
+                                           class="h-4 w-4 rounded border-gray-300 student-checkbox">
+                                </td>
+                                <td class="p-2">{{ student.school_name }}</td>
+                                <td class="p-2">{{ student.class_name }}</td>
+                                <td class="p-2 {% if student.is_duplicate %}font-bold text-red-700{% endif %}">{{ student.student_name }}</td>
+                                <td class="p-2">{{ student.class_number|default:"-" }}</td>
+                                <td class="p-2">{{ student.grade|default:"-" }}</td>
+                                <td class="p-2 text-xs">{{ student.zep_space_url|default:"-" }}</td>
+                                <td class="p-2 text-xs">
+                                    {% if student.is_duplicate %}
+                                        <span class="text-red-600 font-semibold">⚠️ 중복</span>
+                                        <br><span class="text-red-600 text-xs">{{ student.duplicate_warning }}</span>
+                                    {% else %}
+                                        <span class="text-green-600">✓ 신규</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+
                     <div class="flex space-x-3">
                         <button type="submit" name="confirm" class="bg-green-600 text-white px-6 py-2 rounded hover:bg-green-700">
-                            확인 및 등록
+                            확인 및 등록 (<span id="selected-count">0</span>명)
                         </button>
                         <a href="{% url 'students:upload-csv' %}" class="bg-gray-200 px-6 py-2 rounded hover:bg-gray-300">
                             취소
@@ -92,21 +92,37 @@
     </div>
 
     <script>
+        function updateSelectedCount() {
+            const count = document.querySelectorAll('.student-checkbox:checked').length;
+            document.getElementById('selected-count').textContent = count;
+        }
+
         function selectAll() {
-            document.querySelectorAll('input[name="selected_students"]').forEach(cb => cb.checked = true);
+            document.querySelectorAll('.student-checkbox').forEach(cb => cb.checked = true);
+            updateSelectedCount();
         }
 
         function selectNone() {
-            document.querySelectorAll('input[name="selected_students"]').forEach(cb => cb.checked = false);
+            document.querySelectorAll('.student-checkbox').forEach(cb => cb.checked = false);
+            updateSelectedCount();
         }
 
         function selectNew() {
-            document.querySelectorAll('input[name="selected_students"]').forEach((cb, index) => {
+            document.querySelectorAll('.student-checkbox').forEach((cb, index) => {
                 const row = cb.closest('tr');
                 const isDuplicate = row.classList.contains('bg-red-50');
                 cb.checked = !isDuplicate;
             });
+            updateSelectedCount();
         }
+
+        // Add change event to all checkboxes
+        document.querySelectorAll('.student-checkbox').forEach(cb => {
+            cb.addEventListener('change', updateSelectedCount);
+        });
+
+        // Initial count
+        updateSelectedCount();
     </script>
 </body>
 </html>

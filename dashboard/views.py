@@ -242,6 +242,8 @@ def instructor_dashboard(request):
         schools_data[school_name].append({
             'id': cls.id,
             'name': cls.name,
+            'academic_year': cls.academic_year,
+            'semester_display': cls.get_semester_display(),
             'student_count': students.count(),
             'spaces_created': students.exclude(zep_space_url='').count(),
             'students': students
@@ -283,6 +285,19 @@ def create_school(request):
         try:
             data = json.loads(request.body)
             school_name = data['name'].strip()
+
+            # Validate school name length (max 10 characters)
+            if len(school_name) > 10:
+                return JsonResponse({
+                    'success': False,
+                    'error': '학교명은 10글자 이내로 입력해주세요.'
+                }, status=400)
+
+            if len(school_name) == 0:
+                return JsonResponse({
+                    'success': False,
+                    'error': '학교명을 입력해주세요.'
+                }, status=400)
 
             # Check if school with this name already exists
             if School.objects.filter(name=school_name).exists():
@@ -362,13 +377,21 @@ def create_student(request):
                 return JsonResponse({'success': False, 'error': '권한이 없습니다'}, status=403)
 
             # Create user account for the student
-            from students.services import StudentAccountService
-            generated_email = StudentAccountService.generate_student_email(data['name'], class_obj.school.name)
+            from students.services import StudentAccountService, generate_password
+            username, generated_email = StudentAccountService.generate_student_username(
+                data['name'],
+                class_obj.school.name,
+                class_obj.name
+            )
+            password = generate_password()
 
             user = User.objects.create_user(
-                username=generated_email,
+                username=username,
                 email=generated_email,
-                role='student'
+                password=password,
+                role='student',
+                first_name=data['name'],
+                affiliated_school=class_obj.school
             )
 
             student = Student.objects.create(
@@ -377,8 +400,7 @@ def create_student(request):
                 class_number=data.get('class_number'),
                 grade=data.get('grade'),
                 class_assignment=class_obj,
-                generated_email=generated_email,
-                zep_space_url=data.get('zep_space_url', '')
+                generated_email=generated_email
             )
 
             return JsonResponse({
@@ -389,7 +411,7 @@ def create_student(request):
                     'class_number': student.class_number,
                     'grade': student.grade,
                     'class': class_obj.name,
-                    'zep_space_url': student.zep_space_url,
+                    'space_count': student.space_count,
                     'is_space_created': student.is_space_created
                 }
             })
@@ -440,6 +462,125 @@ def update_student(request, student_id):
             return JsonResponse({'success': False, 'error': str(e)}, status=400)
 
     return JsonResponse({'success': False, 'error': 'Invalid method'}, status=405)
+
+@instructor_required
+def add_student_space(request, student_id):
+    """
+    API endpoint to add a new ZEP space to a student.
+    Allows multiple spaces per student.
+    """
+    if request.method == 'POST':
+        import json
+        from spaces.models import StudentSpace
+
+        try:
+            data = json.loads(request.body)
+
+            # Get the student and verify instructor owns the class
+            student = Student.objects.select_related('class_assignment').get(id=student_id)
+
+            if student.class_assignment.instructor != request.user:
+                return JsonResponse({'success': False, 'error': '권한이 없습니다'}, status=403)
+
+            # Check if this is the first space
+            is_first = not student.spaces.exists() and not student.zep_space_url
+
+            # Create new space
+            space = StudentSpace.objects.create(
+                student=student,
+                name=data.get('name', '기본 스페이스'),
+                url=data['url'],
+                is_primary=is_first or data.get('is_primary', False),
+                is_public=data.get('is_public', False),
+                description=data.get('description', '')
+            )
+
+            return JsonResponse({
+                'success': True,
+                'space': {
+                    'id': space.id,
+                    'name': space.name,
+                    'url': space.url,
+                    'is_primary': space.is_primary,
+                    'is_public': space.is_public
+                }
+            })
+        except Student.DoesNotExist:
+            return JsonResponse({'success': False, 'error': '학생을 찾을 수 없습니다'}, status=404)
+        except Exception as e:
+            return JsonResponse({'success': False, 'error': str(e)}, status=400)
+
+    return JsonResponse({'success': False, 'error': 'Invalid method'}, status=405)
+
+
+@instructor_required
+def get_student_spaces(request, student_id):
+    """
+    API endpoint to get all spaces for a student.
+    """
+    try:
+        student = Student.objects.select_related('class_assignment').get(id=student_id)
+
+        if student.class_assignment.instructor != request.user:
+            return JsonResponse({'success': False, 'error': '권한이 없습니다'}, status=403)
+
+        spaces = []
+
+        # Get spaces from new model
+        for space in student.spaces.all():
+            spaces.append({
+                'id': space.id,
+                'name': space.name,
+                'url': space.url,
+                'is_primary': space.is_primary,
+                'is_public': space.is_public
+            })
+
+        # Include legacy zep_space_url if no new spaces exist
+        if not spaces and student.zep_space_url:
+            spaces.append({
+                'id': None,
+                'name': '기본 스페이스',
+                'url': student.zep_space_url,
+                'is_primary': True,
+                'is_public': student.is_public,
+                'legacy': True
+            })
+
+        return JsonResponse({
+            'success': True,
+            'student_id': student.id,
+            'student_name': student.name,
+            'spaces': spaces
+        })
+    except Student.DoesNotExist:
+        return JsonResponse({'success': False, 'error': '학생을 찾을 수 없습니다'}, status=404)
+
+
+@instructor_required
+def delete_student_space(request, space_id):
+    """
+    API endpoint to delete a student space.
+    """
+    if request.method == 'DELETE':
+        from spaces.models import StudentSpace
+
+        try:
+            space = StudentSpace.objects.select_related(
+                'student__class_assignment'
+            ).get(id=space_id)
+
+            if space.student.class_assignment.instructor != request.user:
+                return JsonResponse({'success': False, 'error': '권한이 없습니다'}, status=403)
+
+            space.delete()
+
+            return JsonResponse({'success': True})
+        except StudentSpace.DoesNotExist:
+            return JsonResponse({'success': False, 'error': '스페이스를 찾을 수 없습니다'}, status=404)
+
+    return JsonResponse({'success': False, 'error': 'Invalid method'}, status=405)
+
 
 @instructor_required
 def export_students(request):

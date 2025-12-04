@@ -65,15 +65,15 @@ class StudentAdmin(admin.ModelAdmin):
     """
     Admin interface for Student model
     """
-    list_display = ('name', 'class_number', 'grade', 'class_assignment', 'has_zep_space', 'created_at')
-    list_filter = ('grade', 'class_number', 'class_assignment__school', 'class_assignment')
-    search_fields = ('name', 'generated_email', 'user__username')
-    readonly_fields = ('created_at', 'updated_at', 'generated_email')
+    list_display = ('id', 'name', 'class_number', 'grade', 'class_assignment', 'academic_year_display', 'has_zep_space', 'created_at')
+    list_filter = ('grade', 'class_number', 'class_assignment__academic_year', 'class_assignment__semester', 'class_assignment__school', 'class_assignment')
+    search_fields = ('id', 'name', 'generated_email', 'user__username')
+    readonly_fields = ('id', 'created_at', 'updated_at', 'generated_email')
     autocomplete_fields = ['user', 'class_assignment']
 
     fieldsets = (
         ('기본 정보', {
-            'fields': ('user', 'name', 'class_number', 'grade')
+            'fields': ('id', 'user', 'name', 'class_number', 'grade')
         }),
         ('학급 정보', {
             'fields': ('class_assignment',)
@@ -98,6 +98,13 @@ class StudentAdmin(admin.ModelAdmin):
         return bool(obj.zep_space_url)
     has_zep_space.short_description = 'ZEP 스페이스'
     has_zep_space.boolean = True
+
+    def academic_year_display(self, obj):
+        """Display academic year and semester from class assignment"""
+        if obj.class_assignment:
+            return f"{obj.class_assignment.academic_year} {obj.class_assignment.get_semester_display()}"
+        return '-'
+    academic_year_display.short_description = '학년도'
 
 
 @admin.register(FailedSpaceCreation, site=admin_site)

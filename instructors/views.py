@@ -87,7 +87,19 @@ def instructor_create(request):
 @admin_required
 def instructor_detail(request, pk):
     """Display detailed information about an instructor."""
-    instructor = get_object_or_404(Instructor, pk=pk)
+    from authentication.models import User
+
+    # Try to find by Instructor.pk first, then by User.id
+    try:
+        instructor = Instructor.objects.get(pk=pk)
+    except Instructor.DoesNotExist:
+        # Try to find by User.id
+        user = get_object_or_404(User, pk=pk, role='instructor')
+        # Get or create Instructor profile
+        instructor, created = Instructor.objects.get_or_create(
+            user=user,
+            defaults={'affiliated_school': user.affiliated_school}
+        )
 
     # Get instructor's classes
     classes = instructor.user.taught_classes.select_related('school').all()
@@ -103,7 +115,19 @@ def instructor_detail(request, pk):
 @admin_required
 def instructor_edit(request, pk):
     """Edit instructor profile information."""
-    instructor = get_object_or_404(Instructor, pk=pk)
+    from authentication.models import User
+
+    # Try to find by Instructor.pk first, then by User.id
+    try:
+        instructor = Instructor.objects.get(pk=pk)
+    except Instructor.DoesNotExist:
+        # Try to find by User.id
+        user = get_object_or_404(User, pk=pk, role='instructor')
+        # Get or create Instructor profile
+        instructor, created = Instructor.objects.get_or_create(
+            user=user,
+            defaults={'affiliated_school': user.affiliated_school}
+        )
 
     if request.method == 'POST':
         form = InstructorEditForm(request.POST, instance=instructor)
@@ -115,7 +139,7 @@ def instructor_edit(request, pk):
                     request,
                     f'강사 "{instructor.user.get_full_name() or instructor.user.username}" 정보가 수정되었습니다.'
                 )
-                return redirect('instructors:detail', pk=instructor.pk)
+                return redirect('instructors:detail', pk=instructor.user.id)
             except Exception as e:
                 logger.error(f"Error updating instructor: {e}")
                 messages.error(request, f'강사 정보 수정 중 오류가 발생했습니다: {e}')
@@ -132,6 +156,51 @@ def instructor_edit(request, pk):
     }
 
     return render(request, 'instructors/edit.html', context)
+
+
+@instructor_required
+def my_profile(request):
+    """
+    강사 본인 프로필 조회 및 수정
+
+    강사가 자신의 소속학교 등 프로필 정보를 설정할 수 있습니다.
+    """
+    from authentication.models import User
+
+    # Get or create Instructor profile for current user
+    instructor, created = Instructor.objects.get_or_create(
+        user=request.user,
+        defaults={'affiliated_school': request.user.affiliated_school}
+    )
+
+    if request.method == 'POST':
+        form = InstructorEditForm(request.POST, instance=instructor)
+        if form.is_valid():
+            try:
+                instructor = form.save()
+                logger.info(f"Instructor {instructor.user.username} updated their profile")
+                messages.success(request, '프로필이 수정되었습니다.')
+                return redirect('instructors:my_profile')
+            except Exception as e:
+                logger.error(f"Error updating instructor profile: {e}")
+                messages.error(request, f'프로필 수정 중 오류가 발생했습니다: {e}')
+        else:
+            messages.error(request, '입력한 정보를 확인해주세요.')
+    else:
+        form = InstructorEditForm(instance=instructor)
+
+    # Get instructor's classes
+    classes = request.user.taught_classes.select_related('school').all()
+
+    context = {
+        'form': form,
+        'instructor': instructor,
+        'classes': classes,
+        'title': '내 프로필',
+        'submit_text': '저장',
+    }
+
+    return render(request, 'instructors/my_profile.html', context)
 
 
 @instructor_required

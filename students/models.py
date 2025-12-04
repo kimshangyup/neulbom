@@ -10,9 +10,9 @@ class School(models.Model):
     Each school is owned by the instructor who created it.
     """
     name = models.CharField(
-        max_length=200,
+        max_length=10,
         verbose_name='학교명',
-        help_text='학교 이름'
+        help_text='학교 이름 (최대 10글자)'
     )
     instructor = models.ForeignKey(
         settings.AUTH_USER_MODEL,
@@ -236,7 +236,31 @@ class Student(models.Model):
     @property
     def is_space_created(self):
         """Check if ZEP space has been created for this student."""
-        return bool(self.zep_space_url)
+        return bool(self.zep_space_url) or self.spaces.exists()
+
+    @property
+    def primary_space(self):
+        """Get the primary space or the first available space."""
+        # First check the new spaces model
+        space = self.spaces.filter(is_primary=True).first()
+        if space:
+            return space
+        # Fall back to first space
+        space = self.spaces.first()
+        if space:
+            return space
+        # Fall back to legacy zep_space_url
+        if self.zep_space_url:
+            return {'url': self.zep_space_url, 'name': '기본 스페이스'}
+        return None
+
+    @property
+    def space_count(self):
+        """Get total number of spaces including legacy field."""
+        count = self.spaces.count()
+        if not count and self.zep_space_url:
+            return 1
+        return count
 
 
 class FailedSpaceCreation(models.Model):

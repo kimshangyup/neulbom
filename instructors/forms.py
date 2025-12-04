@@ -111,6 +111,8 @@ class InstructorEditForm(forms.ModelForm):
         user = instructor.user
         user.first_name = self.cleaned_data.get('first_name', '')
         user.last_name = self.cleaned_data.get('last_name', '')
+        # Sync affiliated_school to User model as well
+        user.affiliated_school = self.cleaned_data.get('affiliated_school')
 
         if commit:
             user.save()

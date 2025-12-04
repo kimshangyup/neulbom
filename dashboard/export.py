@@ -5,6 +5,18 @@ CSV export functionality for dashboard metrics.
 import csv
 from django.http import HttpResponse
 from datetime import datetime
+from django.utils import timezone
+import pytz
+
+
+def to_kst(dt):
+    """Convert datetime to KST (Korea Standard Time)."""
+    if dt is None:
+        return None
+    kst = pytz.timezone('Asia/Seoul')
+    if timezone.is_aware(dt):
+        return dt.astimezone(kst)
+    return kst.localize(dt)
 
 
 def export_metrics_csv(metrics):
@@ -68,11 +80,31 @@ def export_students_csv(students):
     # UTF-8 BOM for Excel compatibility (utf-8-sig already adds it)
     writer = csv.writer(response)
 
-    # Header
-    writer.writerow(['Name', 'Class Number', 'Grade', 'Class', 'School', 'Email', 'ZEP Space URL', 'Space Status', 'Last Activity'])
+    # Header - clarify that email is system-generated login account
+    writer.writerow([
+        '이름',
+        '반번호',
+        '학년',
+        '학급',
+        '학교',
+        '계정 이메일 (로그인용)',
+        'ZEP 스페이스 URL',
+        '스페이스 상태',
+        '마지막 로그인 (KST)',
+        '등록일 (KST)'
+    ])
 
     # Data rows
     for student in students:
+        # Get last login from user account
+        last_login = None
+        if student.user:
+            last_login = student.user.last_login
+
+        # Convert times to KST
+        last_login_kst = to_kst(last_login) if last_login else None
+        created_at_kst = to_kst(student.created_at) if student.created_at else None
+
         writer.writerow([
             student.name,
             student.class_number if student.class_number else '-',
@@ -80,9 +112,10 @@ def export_students_csv(students):
             student.class_assignment.name if student.class_assignment else 'N/A',
             student.class_assignment.school.name if student.class_assignment and student.class_assignment.school else 'N/A',
             student.generated_email,
-            student.zep_space_url or 'Not Created',
-            'Created' if student.is_space_created else 'Not Created',
-            student.updated_at.strftime('%Y-%m-%d %H:%M:%S') if student.updated_at else 'N/A'
+            student.zep_space_url or '미생성',
+            '생성됨' if student.is_space_created else '미생성',
+            last_login_kst.strftime('%Y-%m-%d %H:%M:%S') if last_login_kst else '로그인 기록 없음',
+            created_at_kst.strftime('%Y-%m-%d %H:%M:%S') if created_at_kst else 'N/A'
         ])
 
     return response

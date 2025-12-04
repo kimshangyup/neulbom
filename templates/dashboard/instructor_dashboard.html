@@ -164,7 +164,7 @@
                                 <div class="flex-1">
                                     <div class="flex items-center justify-between">
                                         <div>
-                                            <p class="font-medium text-gray-900 class-name">{{ class.name }}</p>
+                                            <p class="font-medium text-gray-900 class-name">{{ class.name }} <span class="text-xs text-gray-500 font-normal">({{ class.academic_year }} {{ class.semester_display }})</span></p>
                                             <p class="text-xs text-gray-500">학생 <span class="student-count">{{ class.student_count }}</span>명 • ZEP 공간 {{ class.spaces_created }}개</p>
                                         </div>
                                         <div class="flex items-center space-x-2">
@@ -192,11 +192,10 @@
                                     <table class="min-w-full text-sm">
                                         <thead>
                                             <tr class="text-xs text-gray-500">
-                                                <th class="text-left py-2 w-1/5">학생 이름</th>
-                                                <th class="text-left py-2 w-1/5">반/학년</th>
-                                                <th class="text-left py-2 w-1/5">ZEP 공간</th>
-                                                <th class="text-left py-2 w-1/5">상태</th>
-                                                <th class="text-left py-2 w-1/5">관리</th>
+                                                <th class="text-left py-2 w-1/4">학생 이름</th>
+                                                <th class="text-left py-2 w-1/4">반/학년</th>
+                                                <th class="text-left py-2 w-1/4">ZEP 공간</th>
+                                                <th class="text-left py-2 w-1/4">관리</th>
                                             </tr>
                                         </thead>
                                         <tbody class="text-gray-900">
@@ -215,31 +214,25 @@
                                                     {% endif %}
                                                 </td>
                                                 <td class="py-2">
-                                                    {% if student.zep_space_url %}
-                                                    <a href="{{ student.zep_space_url }}" target="_blank"
-                                                       class="text-indigo-600 hover:text-indigo-800 inline-flex items-center text-xs">
-                                                        <span class="mr-1">공간 열기</span>
-                                                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
-                                                        </svg>
-                                                    </a>
-                                                    {% else %}
-                                                    <span class="text-gray-400 text-xs">미생성</span>
-                                                    {% endif %}
+                                                    <button onclick="openSpacesModal({{ student.id }}, '{{ student.name|escapejs }}'); event.stopPropagation();"
+                                                            class="text-indigo-600 hover:text-indigo-800 text-xs font-medium inline-flex items-center">
+                                                        {% if student.space_count > 0 %}
+                                                            <span class="mr-1">{{ student.space_count }}개 공간</span>
+                                                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
+                                                            </svg>
+                                                        {% elif student.zep_space_url %}
+                                                            <span class="mr-1">1개 공간</span>
+                                                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
+                                                            </svg>
+                                                        {% else %}
+                                                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600">추가하기</span>
+                                                        {% endif %}
+                                                    </button>
                                                 </td>
                                                 <td class="py-2">
-                                                    {% if student.is_space_created %}
-                                                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                                                        생성됨
-                                                    </span>
-                                                    {% else %}
-                                                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600">
-                                                        미생성
-                                                    </span>
-                                                    {% endif %}
-                                                </td>
-                                                <td class="py-2">
-                                                    <button onclick="openEditStudentModal({{ student.id }}, '{{ student.name|escapejs }}', {{ student.class_number|default:'null' }}, {{ student.grade|default:'null' }}, '{{ student.zep_space_url|escapejs }}'); event.stopPropagation();"
+                                                    <button onclick="openEditStudentModal({{ student.id }}, '{{ student.name|escapejs }}', {{ student.class_number|default:'null' }}, {{ student.grade|default:'null' }}); event.stopPropagation();"
                                                             class="text-xs text-indigo-600 hover:text-indigo-800 font-medium">
                                                         수정하기
                                                     </button>
@@ -287,10 +280,11 @@
             <form id="school-form" onsubmit="submitSchool(event)">
                 <div class="space-y-4">
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">학교명 *</label>
-                        <input type="text" name="name" required
+                        <label class="block text-sm font-medium text-gray-700 mb-1">학교명 * <span class="text-xs text-gray-500">(최대 10글자)</span></label>
+                        <input type="text" name="name" required maxlength="10"
                                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                                placeholder="예: 서울초등학교">
+                        <p class="text-xs text-gray-500 mt-1">학교명은 10글자 이내로 입력해주세요.</p>
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">기타</label>
@@ -407,13 +401,8 @@
                                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                                placeholder="예: 3 (3학년)">
                     </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">ZEP 공간 URL</label>
-                        <input type="url" name="zep_space_url"
-                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                               placeholder="https://zep.us/... (선택)">
-                    </div>
                 </div>
+                <p class="text-xs text-gray-500 mt-2">학생 등록 후 ZEP 스페이스는 별도로 추가할 수 있습니다.</p>
                 <div class="mt-6 flex space-x-3">
                     <button type="button" onclick="closeStudentModal()"
                             class="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">
@@ -462,12 +451,6 @@
                                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                                placeholder="예: 3 (3학년)">
                     </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">ZEP 공간 URL</label>
-                        <input type="url" name="zep_space_url" id="edit-student-zep-url"
-                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                               placeholder="https://zep.us/... (선택)">
-                    </div>
                 </div>
                 <div class="mt-6 flex space-x-3">
                     <button type="button" onclick="closeEditStudentModal()"
@@ -480,6 +463,59 @@
                     </button>
                 </div>
             </form>
+        </div>
+    </div>
+</div>
+
+<!-- Spaces Management Modal -->
+<div id="spaces-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
+    <div class="bg-white rounded-lg shadow-xl max-w-lg w-full mx-4">
+        <div class="p-6">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-xl font-bold text-gray-900">ZEP 스페이스 관리</h3>
+                <button onclick="closeSpacesModal()" class="text-gray-400 hover:text-gray-600">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+            <p class="text-sm text-gray-600 mb-4">학생: <span id="spaces-student-name" class="font-medium text-gray-900"></span></p>
+            <input type="hidden" id="spaces-student-id">
+
+            <!-- Spaces List -->
+            <div id="spaces-list" class="space-y-2 mb-4 max-h-60 overflow-y-auto">
+                <p class="text-gray-500 text-sm text-center py-4">로딩 중...</p>
+            </div>
+
+            <!-- Add New Space Form -->
+            <div class="border-t pt-4">
+                <h4 class="text-sm font-medium text-gray-700 mb-2">새 스페이스 추가</h4>
+                <form id="add-space-form" onsubmit="submitAddSpace(event)">
+                    <div class="space-y-3">
+                        <div>
+                            <input type="text" name="space_name" placeholder="스페이스 이름 (예: 포트폴리오)"
+                                   class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                        </div>
+                        <div>
+                            <input type="url" name="space_url" required placeholder="ZEP 스페이스 URL *"
+                                   class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                        </div>
+                    </div>
+                    <div class="mt-3 flex space-x-2">
+                        <button type="submit"
+                                class="flex-1 px-4 py-2 bg-indigo-600 text-white text-sm rounded-lg hover:bg-indigo-700">
+                            추가
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <div class="mt-4 flex justify-end">
+                <button type="button" onclick="closeSpacesModal()"
+                        class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">
+                    닫기
+                </button>
+            </div>
         </div>
     </div>
 </div>
@@ -629,17 +665,132 @@ function closeStudentModal() {
 }
 
 // Edit Student Modal Functions
-function openEditStudentModal(studentId, name, classNumber, grade, zepSpaceUrl) {
+function openEditStudentModal(studentId, name, classNumber, grade) {
     document.getElementById('edit-student-modal').classList.remove('hidden');
     document.getElementById('edit-student-id').value = studentId;
     document.getElementById('edit-student-name').value = name;
     document.getElementById('edit-student-class-number').value = classNumber || '';
     document.getElementById('edit-student-grade').value = grade || '';
-    document.getElementById('edit-student-zep-url').value = zepSpaceUrl || '';
 }
 
 function closeEditStudentModal() {
     document.getElementById('edit-student-modal').classList.add('hidden');
+}
+
+// Spaces Modal Functions
+async function openSpacesModal(studentId, studentName) {
+    document.getElementById('spaces-modal').classList.remove('hidden');
+    document.getElementById('spaces-student-id').value = studentId;
+    document.getElementById('spaces-student-name').textContent = studentName;
+    document.getElementById('add-space-form').reset();
+
+    // Load spaces
+    await loadStudentSpaces(studentId);
+}
+
+function closeSpacesModal() {
+    document.getElementById('spaces-modal').classList.add('hidden');
+}
+
+async function loadStudentSpaces(studentId) {
+    const spacesList = document.getElementById('spaces-list');
+    spacesList.innerHTML = '<p class="text-gray-500 text-sm text-center py-4">로딩 중...</p>';
+
+    try {
+        const response = await fetch(`/dashboard/instructor/api/student/${studentId}/spaces/`);
+        const result = await response.json();
+
+        if (result.success) {
+            if (result.spaces.length === 0) {
+                spacesList.innerHTML = '<p class="text-gray-500 text-sm text-center py-4">등록된 스페이스가 없습니다</p>';
+            } else {
+                spacesList.innerHTML = result.spaces.map(space => `
+                    <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                        <div class="flex-1 min-w-0">
+                            <p class="text-sm font-medium text-gray-900 truncate">${space.name}</p>
+                            <a href="${space.url}" target="_blank" class="text-xs text-indigo-600 hover:text-indigo-800 truncate block">
+                                ${space.url}
+                            </a>
+                        </div>
+                        <div class="flex items-center space-x-2 ml-3">
+                            ${space.is_primary ? '<span class="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded">대표</span>' : ''}
+                            ${space.id && !space.legacy ? `
+                                <button onclick="deleteSpace(${space.id})" class="text-red-500 hover:text-red-700">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                    </svg>
+                                </button>
+                            ` : ''}
+                        </div>
+                    </div>
+                `).join('');
+            }
+        } else {
+            spacesList.innerHTML = '<p class="text-red-500 text-sm text-center py-4">로딩 실패</p>';
+        }
+    } catch (error) {
+        spacesList.innerHTML = '<p class="text-red-500 text-sm text-center py-4">오류 발생</p>';
+    }
+}
+
+async function submitAddSpace(event) {
+    event.preventDefault();
+    const form = event.target;
+    const studentId = document.getElementById('spaces-student-id').value;
+
+    const data = {
+        name: form.space_name.value || '기본 스페이스',
+        url: form.space_url.value
+    };
+
+    try {
+        const response = await fetch(`/dashboard/instructor/api/student/${studentId}/add-space/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCSRFToken()
+            },
+            body: JSON.stringify(data)
+        });
+
+        const result = await response.json();
+        if (result.success) {
+            form.reset();
+            await loadStudentSpaces(studentId);
+            // Update the main table
+            location.reload();
+        } else {
+            alert('오류: ' + result.error);
+        }
+    } catch (error) {
+        alert('오류가 발생했습니다: ' + error);
+    }
+}
+
+async function deleteSpace(spaceId) {
+    if (!confirm('이 스페이스를 삭제하시겠습니까?')) return;
+
+    const studentId = document.getElementById('spaces-student-id').value;
+
+    try {
+        const response = await fetch(`/dashboard/instructor/api/space/${spaceId}/delete/`, {
+            method: 'DELETE',
+            headers: {
+                'X-CSRFToken': getCSRFToken()
+            }
+        });
+
+        const result = await response.json();
+        if (result.success) {
+            await loadStudentSpaces(studentId);
+            // Update the main table
+            location.reload();
+        } else {
+            alert('오류: ' + result.error);
+        }
+    } catch (error) {
+        alert('오류가 발생했습니다: ' + error);
+    }
 }
 
 async function submitEditStudent(event) {
@@ -649,8 +800,7 @@ async function submitEditStudent(event) {
     const data = {
         name: form.name.value,
         class_number: form.class_number.value ? parseInt(form.class_number.value) : null,
-        grade: form.grade.value ? parseInt(form.grade.value) : null,
-        zep_space_url: form.zep_space_url.value
+        grade: form.grade.value ? parseInt(form.grade.value) : null
     };
 
     try {
@@ -683,8 +833,7 @@ async function submitStudent(event) {
         class_id: form.class_id.value,
         name: form.name.value,
         class_number: form.class_number.value ? parseInt(form.class_number.value) : null,
-        grade: form.grade.value ? parseInt(form.grade.value) : null,
-        zep_space_url: form.zep_space_url.value
+        grade: form.grade.value ? parseInt(form.grade.value) : null
     };
 
     try {
@@ -719,7 +868,7 @@ function addStudentToTable(classId, student) {
 
     const studentsTable = classCard.querySelector('.students-table');
     const emptyMessage = studentsTable.querySelector('.empty-message');
-    
+
     if (emptyMessage) {
         // Replace empty message with table
         studentsTable.innerHTML = `
@@ -729,7 +878,7 @@ function addStudentToTable(classId, student) {
                         <th class="text-left py-2 w-1/4">학생 이름</th>
                         <th class="text-left py-2 w-1/4">반/학년</th>
                         <th class="text-left py-2 w-1/4">ZEP 공간</th>
-                        <th class="text-left py-2 w-1/4">상태</th>
+                        <th class="text-left py-2 w-1/4">관리</th>
                     </tr>
                 </thead>
                 <tbody class="text-gray-900"></tbody>
@@ -741,19 +890,7 @@ function addStudentToTable(classId, student) {
     const row = document.createElement('tr');
     row.className = 'border-t border-gray-200 student-row';
     row.setAttribute('data-student-name', student.name.toLowerCase());
-    
-    const spaceLink = student.zep_space_url ? 
-        `<a href="${student.zep_space_url}" target="_blank" class="text-indigo-600 hover:text-indigo-800 inline-flex items-center text-xs">
-            <span class="mr-1">공간 열기</span>
-            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
-            </svg>
-        </a>` :
-        '<span class="text-gray-400 text-xs">미생성</span>';
-
-    const statusBadge = student.is_space_created ?
-        '<span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">생성됨</span>' :
-        '<span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600">미생성</span>';
+    row.setAttribute('data-student-id', student.id);
 
     let classGradeInfo = '-';
     if (student.class_number && student.grade) {
@@ -764,13 +901,25 @@ function addStudentToTable(classId, student) {
         classGradeInfo = `${student.grade}학년`;
     }
 
+    const escapedName = student.name.replace(/'/g, "\\'");
+
     row.innerHTML = `
         <td class="py-2">${student.name}</td>
         <td class="py-2 text-gray-600">${classGradeInfo}</td>
-        <td class="py-2">${spaceLink}</td>
-        <td class="py-2">${statusBadge}</td>
+        <td class="py-2">
+            <button onclick="openSpacesModal(${student.id}, '${escapedName}'); event.stopPropagation();"
+                    class="text-indigo-600 hover:text-indigo-800 text-xs font-medium inline-flex items-center">
+                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600">추가하기</span>
+            </button>
+        </td>
+        <td class="py-2">
+            <button onclick="openEditStudentModal(${student.id}, '${escapedName}', ${student.class_number || 'null'}, ${student.grade || 'null'}); event.stopPropagation();"
+                    class="text-xs text-indigo-600 hover:text-indigo-800 font-medium">
+                수정하기
+            </button>
+        </td>
     `;
-    
+
     tbody.appendChild(row);
 
     // Update student count
@@ -855,6 +1004,7 @@ document.addEventListener('keydown', function(event) {
         closeClassModal();
         closeStudentModal();
         closeEditStudentModal();
+        closeSpacesModal();
     }
 });
 </script>

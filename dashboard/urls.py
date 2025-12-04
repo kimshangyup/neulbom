@@ -15,4 +15,7 @@ urlpatterns = [
     path('instructor/api/create-class/', views.create_class, name='create_class'),
     path('instructor/api/create-student/', views.create_student, name='create_student'),
     path('instructor/api/update-student/<int:student_id>/', views.update_student, name='update_student'),
+    path('instructor/api/student/<int:student_id>/spaces/', views.get_student_spaces, name='get_student_spaces'),
+    path('instructor/api/student/<int:student_id>/add-space/', views.add_student_space, name='add_student_space'),
+    path('instructor/api/space/<int:space_id>/delete/', views.delete_student_space, name='delete_student_space'),
 ]

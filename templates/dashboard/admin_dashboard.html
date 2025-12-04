@@ -233,39 +233,29 @@
                                 <table class="min-w-full text-sm">
                                     <thead>
                                         <tr class="text-xs text-gray-500">
+                                            <th class="text-left py-2">ID</th>
                                             <th class="text-left py-2">학생 이름</th>
-                                            <th class="text-left py-2">학생 ID</th>
+                                            <th class="text-left py-2">이메일</th>
                                             <th class="text-left py-2">ZEP 공간</th>
-                                            <th class="text-left py-2">상태</th>
                                         </tr>
                                     </thead>
                                     <tbody class="text-gray-900">
                                         {% for student in class.students %}
                                         <tr class="border-t border-gray-200">
+                                            <td class="py-2 text-gray-500 text-xs">#{{ student.id }}</td>
                                             <td class="py-2">{{ student.name }}</td>
-                                            <td class="py-2 text-gray-600">{{ student.student_id }}</td>
+                                            <td class="py-2 text-gray-600 text-xs">{{ student.generated_email }}</td>
                                             <td class="py-2">
                                                 {% if student.zep_space_url %}
                                                 <a href="{{ student.zep_space_url }}" target="_blank"
-                                                   class="text-indigo-600 hover:text-indigo-800 flex items-center">
+                                                   class="text-indigo-600 hover:text-indigo-800 inline-flex items-center text-xs">
                                                     <span class="mr-1">공간 열기</span>
-                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
                                                     </svg>
                                                 </a>
                                                 {% else %}
-                                                <span class="text-gray-400">미생성</span>
-                                                {% endif %}
-                                            </td>
-                                            <td class="py-2">
-                                                {% if student.is_space_created %}
-                                                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                                                    생성됨
-                                                </span>
-                                                {% else %}
-                                                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600">
-                                                    미생성
-                                                </span>
+                                                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600">미생성</span>
                                                 {% endif %}
                                             </td>
                                         </tr>

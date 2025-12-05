@@ -253,10 +253,22 @@
                                             <td class="py-2">{{ student.name }}</td>
                                             <td class="py-2 text-gray-600 text-xs">{{ student.generated_email }}</td>
                                             <td class="py-2">
-                                                {% if student.zep_space_url %}
+                                                {% if student.space_count > 0 %}
+                                                <span class="text-indigo-600 text-xs font-medium">
+                                                    {{ student.space_count }}개 공간
+                                                </span>
+                                                {% if student.primary_space %}
+                                                    <a href="{% if student.primary_space.url %}{{ student.primary_space.url }}{% else %}{{ student.primary_space }}{% endif %}" target="_blank"
+                                                       class="text-indigo-600 hover:text-indigo-800 inline-flex items-center text-xs ml-1">
+                                                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
+                                                        </svg>
+                                                    </a>
+                                                {% endif %}
+                                                {% elif student.zep_space_url %}
                                                 <a href="{{ student.zep_space_url }}" target="_blank"
                                                    class="text-indigo-600 hover:text-indigo-800 inline-flex items-center text-xs">
-                                                    <span class="mr-1">공간 열기</span>
+                                                    <span class="mr-1">1개 공간</span>
                                                     <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
                                                     </svg>

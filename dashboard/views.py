@@ -410,6 +410,20 @@ def create_student(request):
         try:
             data = json.loads(request.body)
 
+            # Validate student name length
+            student_name = data.get('name', '').strip()
+            if len(student_name) > 10:
+                return JsonResponse({
+                    'success': False,
+                    'error': '학생 이름은 10글자 이내로 입력해주세요.'
+                }, status=400)
+
+            if len(student_name) == 0:
+                return JsonResponse({
+                    'success': False,
+                    'error': '학생 이름을 입력해주세요.'
+                }, status=400)
+
             class_obj = Class.objects.get(id=data['class_id'])
 
             # Verify instructor owns this class
@@ -472,6 +486,14 @@ def update_student(request, student_id):
         try:
             data = json.loads(request.body)
 
+            # Validate student name length
+            student_name = data.get('name', '').strip()
+            if student_name and len(student_name) > 10:
+                return JsonResponse({
+                    'success': False,
+                    'error': '학생 이름은 10글자 이내로 입력해주세요.'
+                }, status=400)
+
             # Get the student and verify instructor owns the class
             student = Student.objects.select_related('class_assignment').get(id=student_id)
 
@@ -479,7 +501,7 @@ def update_student(request, student_id):
                 return JsonResponse({'success': False, 'error': '권한이 없습니다'}, status=403)
 
             # Update student fields
-            student.name = data.get('name', student.name)
+            student.name = student_name if student_name else student.name
             student.class_number = data.get('class_number')
             student.grade = data.get('grade')
             student.zep_space_url = data.get('zep_space_url', '')
@@ -522,8 +544,19 @@ def add_student_space(request, student_id):
             if student.class_assignment.instructor != request.user:
                 return JsonResponse({'success': False, 'error': '권한이 없습니다'}, status=403)
 
-            # Check if this is the first space
-            is_first = not student.spaces.exists() and not student.zep_space_url
+            # Migrate legacy zep_space_url to StudentSpace if exists and not yet migrated
+            if student.zep_space_url and not student.spaces.exists():
+                StudentSpace.objects.create(
+                    student=student,
+                    name='기본 스페이스',
+                    url=student.zep_space_url,
+                    is_primary=True,
+                    is_public=student.is_public,
+                    description='기존 스페이스 (자동 마이그레이션)'
+                )
+
+            # Check if this is the first space (after migration check)
+            is_first = not student.spaces.exists()
 
             # Create new space
             space = StudentSpace.objects.create(

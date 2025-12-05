@@ -165,9 +165,9 @@ class Student(models.Model):
         verbose_name='사용자 계정'
     )
     name = models.CharField(
-        max_length=100,
+        max_length=10,
         verbose_name='이름',
-        help_text='학생 이름'
+        help_text='학생 이름 (최대 10글자)'
     )
     class_number = models.IntegerField(
         null=True,

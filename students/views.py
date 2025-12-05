@@ -174,30 +174,42 @@ def student_upload(request):
                         f'{students_with_space}명의 학생은 이미 ZEP 스페이스 URL이 등록되어 있습니다.'
                     )
 
+                # Skip ZEP space creation for large batches to avoid timeout
+                MAX_BATCH_SIZE_FOR_AUTO_SPACE = 30
+
                 if students_without_space:
-                    from spaces.services import create_spaces_for_students, get_admin_emails
-
-                    instructor_email = request.user.email
-                    admin_emails = get_admin_emails()
-
-                    space_results = create_spaces_for_students(
-                        students=students_without_space,
-                        instructor_email=instructor_email,
-                        admin_emails=admin_emails
-                    )
-
-                    if space_results['success'] > 0:
-                        messages.success(
-                            request,
-                            f'{space_results["success"]}개의 ZEP 스페이스가 생성되었습니다.'
-                        )
-
-                    if space_results['failed'] > 0:
+                    if len(students_without_space) > MAX_BATCH_SIZE_FOR_AUTO_SPACE:
+                        # Too many students - skip auto ZEP creation
                         messages.warning(
                             request,
-                            f'{space_results["failed"]}개의 ZEP 스페이스 생성에 실패했습니다. '
-                            f'관리자 페이지에서 확인하세요.'
+                            f'{len(students_without_space)}명의 학생 계정이 생성되었습니다. '
+                            f'학생 수가 많아 ZEP 스페이스 자동 생성이 생략되었습니다. '
+                            f'대시보드에서 개별 학생의 스페이스를 추가해주세요.'
                         )
+                    else:
+                        from spaces.services import create_spaces_for_students, get_admin_emails
+
+                        instructor_email = request.user.email
+                        admin_emails = get_admin_emails()
+
+                        space_results = create_spaces_for_students(
+                            students=students_without_space,
+                            instructor_email=instructor_email,
+                            admin_emails=admin_emails
+                        )
+
+                        if space_results['success'] > 0:
+                            messages.success(
+                                request,
+                                f'{space_results["success"]}개의 ZEP 스페이스가 생성되었습니다.'
+                            )
+
+                        if space_results['failed'] > 0:
+                            messages.warning(
+                                request,
+                                f'{space_results["failed"]}개의 ZEP 스페이스 생성에 실패했습니다. '
+                                f'관리자 페이지에서 확인하세요.'
+                            )
 
                 # Clean up session
                 del request.session['upload_data']
